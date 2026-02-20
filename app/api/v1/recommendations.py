@@ -82,6 +82,7 @@ async def create_recommendation_endpoint(
         lng=recommendation.lng,
         distance_meters=0,  # Just created, user is at this location
         track=TrackResponse.model_validate(recommendation.track),
+        user=UserResponse.model_validate(recommendation.user),
         message=recommendation.message,
         created_at=recommendation.created_at,
         like_count=like_count,
@@ -123,6 +124,12 @@ async def get_recommendation_detail(
     is_within_range, distance = await check_distance_access(
         db, recommendation_id, lat, lng, max_distance_meters=200
     )
+    
+    if distance is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recommendation not found"
+        )
     
     if not is_within_range:
         raise HTTPException(

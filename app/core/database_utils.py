@@ -2,7 +2,7 @@
 PostGIS utility functions for location-based operations
 """
 from typing import Tuple
-from sqlalchemy import select, func, cast, text
+from sqlalchemy import select, func, cast, text, literal_column
 from sqlalchemy.ext.asyncio import AsyncSession
 from geoalchemy2.functions import ST_DWithin, ST_Distance, ST_MakePoint
 from geoalchemy2.elements import WKTElement
@@ -120,8 +120,8 @@ def add_distance_column(
     """
     user_point = create_point_geom(user_lat, user_lng)
     
-    # Use text() for geography type casting
-    distance_expr = text(
+    # Use literal_column for geography type casting
+    distance_expr = literal_column(
         f"ST_Distance(ST_Transform(geom, 4326)::geography, ST_Transform(ST_GeomFromText('POINT({user_lng} {user_lat})', 4326), 4326)::geography)"
     ).label('distance_meters')
     

@@ -140,7 +140,7 @@ async def spotify_callback(
     await db.refresh(user)
     
     # Create our service JWT token
-    jwt_token = create_access_token(data={"sub": user.id})
+    jwt_token = create_access_token(data={"sub": str(user.id)})
     
     return TokenResponse(
         access_token=jwt_token,
@@ -183,7 +183,7 @@ async def refresh_token(
         New JWT access token
     """
     # Create new JWT token
-    jwt_token = create_access_token(data={"sub": current_user.id})
+    jwt_token = create_access_token(data={"sub": str(current_user.id)})
     
     return TokenResponse(
         access_token=jwt_token,

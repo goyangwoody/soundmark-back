@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.track import Track
 from app.models.recommendation import Recommendation
-from geoalchemy2.functions import ST_MakePoint
+from geoalchemy2.functions import ST_MakePoint, ST_SetSRID
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ async def multiple_recommendations(
             track_id=test_track.id,
             lat=lat,
             lng=lng,
-            geom=ST_MakePoint(lng, lat, type_='POINT', srid=4326),
+            geom=ST_SetSRID(ST_MakePoint(lng, lat), 4326),
             message=f"Nearby recommendation {i+1}"
         )
         db_session.add(rec)
@@ -47,7 +47,7 @@ async def multiple_recommendations(
             track_id=test_track.id,
             lat=lat,
             lng=lng,
-            geom=ST_MakePoint(lng, lat, type_='POINT', srid=4326),
+            geom=ST_SetSRID(ST_MakePoint(lng, lat), 4326),
             message=f"Distant recommendation {i+1}"
         )
         db_session.add(rec)
@@ -97,4 +97,4 @@ async def test_get_map_nearby_unauthorized(client: AsyncClient):
         "/api/v1/map/nearby",
         params={"lat": 37.5665, "lng": 126.9780}
     )
-    assert response.status_code == 401
+    assert response.status_code == 403  # HTTPBearer returns 403 when no token

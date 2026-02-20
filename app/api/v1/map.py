@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models.user import User
 from app.schemas.map import MapResponse, ActiveRecommendation, InactiveCluster
 from app.schemas.track import TrackResponse
+from app.schemas.auth import UserResponse
 from app.services.location import get_map_data
 from app.services.recommendation import get_like_count, check_user_liked
 from app.core.security import get_current_user
@@ -61,6 +62,7 @@ async def get_nearby_map_data(
                 lng=recommendation.lng,
                 distance_meters=distance,
                 track=TrackResponse.model_validate(recommendation.track),
+                user=UserResponse.model_validate(recommendation.user),
                 message=recommendation.message,
                 like_count=like_count,
                 liked=liked

@@ -48,6 +48,7 @@ class RecommendationResponse(BaseModel):
     lng: float
     distance_meters: Optional[float] = None
     track: TrackResponse
+    user: UserResponse
     message: Optional[str] = None
     created_at: datetime
     like_count: int = 0

@@ -38,4 +38,4 @@ async def test_get_current_user(authenticated_client: AsyncClient, test_user):
 async def test_get_current_user_unauthorized(client: AsyncClient):
     """Test getting current user without authentication"""
     response = await client.get("/api/v1/auth/me")
-    assert response.status_code == 401
+    assert response.status_code == 403  # HTTPBearer returns 403 when no token

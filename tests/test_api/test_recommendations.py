@@ -7,22 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.track import Track
 from app.models.recommendation import Recommendation
-from geoalchemy2.functions import ST_MakePoint
-
-
-@pytest.fixture
-async def test_track(db_session: AsyncSession) -> Track:
-    """Create a test track"""
-    track = Track(
-        spotify_track_id="test_track_123",
-        title="Test Song",
-        artist="Test Artist",
-        album="Test Album"
-    )
-    db_session.add(track)
-    await db_session.commit()
-    await db_session.refresh(track)
-    return track
+from geoalchemy2.functions import ST_MakePoint, ST_SetSRID
 
 
 @pytest.fixture
@@ -39,7 +24,7 @@ async def test_recommendation(
         track_id=test_track.id,
         lat=lat,
         lng=lng,
-        geom=ST_MakePoint(lng, lat, type_='POINT', srid=4326),
+        geom=ST_SetSRID(ST_MakePoint(lng, lat), 4326),
         message="Great song for this location!"
     )
     db_session.add(recommendation)
