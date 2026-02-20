@@ -126,7 +126,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_recommendations_created_at'), 'recommendations', ['created_at'], unique=False)
     
     # Create GIST index for spatial queries
-    op.execute('CREATE INDEX idx_recommendations_geom ON recommendations USING GIST (geom)')
+    op.execute('CREATE INDEX IF NOT EXISTS idx_recommendations_geom ON recommendations USING GIST (geom)')
     
     # Create recommendation_likes table
     op.create_table(

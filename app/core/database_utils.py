@@ -2,7 +2,7 @@
 PostGIS utility functions for location-based operations
 """
 from typing import Tuple
-from sqlalchemy import select, func
+from sqlalchemy import select, func, cast, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from geoalchemy2.functions import ST_DWithin, ST_Distance, ST_MakePoint
 from geoalchemy2.elements import WKTElement
@@ -60,10 +60,11 @@ async def calculate_distance_meters(
     point2 = create_point_geom(lat2, lng2)
     
     # ST_Distance with geography type returns meters
+    # Using text() for geography type casting
     query = select(
         func.ST_Distance(
-            func.ST_Transform(point1, 4326)::func.geography,
-            func.ST_Transform(point2, 4326)::func.geography
+            text(f"ST_Transform(ST_GeomFromText('POINT({lng1} {lat1})', 4326), 4326)::geography"),
+            text(f"ST_Transform(ST_GeomFromText('POINT({lng2} {lat2})', 4326), 4326)::geography")
         )
     )
     
@@ -93,12 +94,11 @@ def filter_by_radius(
     user_point = create_point_geom(user_lat, user_lng)
     
     # Convert to geography for meter-based distance
+    # Using cast to geography for PostGIS distance in meters
+    user_geog = text(f"ST_Transform(ST_GeomFromText('POINT({user_lng} {user_lat})', 4326), 4326)::geography")
+    
     return query.where(
-        ST_DWithin(
-            func.ST_Transform(Recommendation.geom, 4326)::func.geography,
-            func.ST_Transform(user_point, 4326)::func.geography,
-            radius_meters
-        )
+        text(f"ST_DWithin(ST_Transform(geom, 4326)::geography, ST_Transform(ST_GeomFromText('POINT({user_lng} {user_lat})', 4326), 4326)::geography, {radius_meters})")
     )
 
 
@@ -120,9 +120,9 @@ def add_distance_column(
     """
     user_point = create_point_geom(user_lat, user_lng)
     
-    distance_expr = func.ST_Distance(
-        func.ST_Transform(Recommendation.geom, 4326)::func.geography,
-        func.ST_Transform(user_point, 4326)::func.geography
+    # Use text() for geography type casting
+    distance_expr = text(
+        f"ST_Distance(ST_Transform(geom, 4326)::geography, ST_Transform(ST_GeomFromText('POINT({user_lng} {user_lat})', 4326), 4326)::geography)"
     ).label('distance_meters')
     
     return query.add_columns(distance_expr)
