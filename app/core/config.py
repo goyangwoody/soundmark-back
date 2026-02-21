@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     
     # OpenAI
     OPENAI_API_KEY: str = ""
-    OPENAI_MODEL: str = "gpt-4o"
+    OPENAI_MODEL: str = "gpt-4.1"
     
     # CORS
     ALLOWED_ORIGINS: str = "http://localhost:3000"
