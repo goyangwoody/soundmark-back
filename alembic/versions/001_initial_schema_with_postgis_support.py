@@ -31,7 +31,6 @@ def upgrade() -> None:
         sa.Column('spotify_id', sa.String(length=255), nullable=False),
         sa.Column('display_name', sa.String(length=255), nullable=True),
         sa.Column('email', sa.String(length=255), nullable=True),
-        sa.Column('profile_image_url', sa.String(length=512), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint('id')
@@ -134,6 +133,7 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('recommendation_id', sa.Integer(), nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=False),
+        sa.Column('emoji', sa.String(length=50), nullable=False, server_default='❤️'),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(['recommendation_id'], ['recommendations.id'], ondelete='CASCADE'),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),

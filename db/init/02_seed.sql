@@ -95,35 +95,32 @@ ON CONFLICT (spotify_track_id) DO NOTHING;
 -- ========================================
 -- 5. Places (Seoul landmarks and popular spots)
 -- ========================================
-INSERT INTO places (name, address, latitude, longitude, place_type, description, created_at, updated_at) VALUES
+INSERT INTO places (place_name, address, lat, lng, geom, created_at, updated_at) VALUES
 -- Central Seoul
-('경복궁', '서울 종로구 사직로 161', 37.579617, 126.977041, 'landmark', '조선 시대의 대표적인 궁궐', NOW(), NOW()),
-('N서울타워', '서울 용산구 남산공원길 105', 37.551169, 126.988227, 'landmark', '서울의 상징적인 타워', NOW(), NOW()),
-('한강공원 여의도', '서울 영등포구 여의동로 330', 37.529030, 126.932570, 'park', '한강변의 대표 공원', NOW(), NOW()),
-
+('경복궁', '서울 종로구 사직로 161', 37.579617, 126.977041, ST_SetSRID(ST_MakePoint(126.977041, 37.579617), 4326), NOW(), NOW()),
+('N서울타워', '서울 용산구 남산공원길 105', 37.551169, 126.988227, ST_SetSRID(ST_MakePoint(126.988227, 37.551169), 4326), NOW(), NOW()),
+('한강공원 여의도', '서울 영등포구 여의동로 330', 37.529030, 126.932570, ST_SetSRID(ST_MakePoint(126.932570, 37.529030), 4326), NOW(), NOW()),
 -- Cafes
-('블루보틀 삼청점', '서울 종로구 삼청로 34', 37.584028, 126.982900, 'cafe', '유명 스페셜티 커피 체인', NOW(), NOW()),
-('테라로사 강남점', '서울 강남구 테헤란로 427', 37.508333, 127.061667, 'cafe', '한국 스페셜티 커피 선구자', NOW(), NOW()),
-
+('블루보틀 삼청점', '서울 종로구 삼청로 34', 37.584028, 126.982900, ST_SetSRID(ST_MakePoint(126.982900, 37.584028), 4326), NOW(), NOW()),
+('테라로사 강남점', '서울 강남구 테헤란로 427', 37.508333, 127.061667, ST_SetSRID(ST_MakePoint(127.061667, 37.508333), 4326), NOW(), NOW()),
 -- Universities
-('서울대학교', '서울 관악구 관악로 1', 37.460800, 126.951900, 'university', '대한민국 최고의 명문 대학', NOW(), NOW()),
-('연세대학교', '서울 서대문구 연세로 50', 37.566536, 126.939370, 'university', '한국의 명문 사립대학', NOW(), NOW()),
-('홍익대학교', '서울 마포구 와우산로 94', 37.550970, 126.925620, 'university', '예술과 디자인으로 유명한 대학', NOW(), NOW()),
-
+('서울대학교', '서울 관악구 관악로 1', 37.460800, 126.951900, ST_SetSRID(ST_MakePoint(126.951900, 37.460800), 4326), NOW(), NOW()),
+('연세대학교', '서울 서대문구 연세로 50', 37.566536, 126.939370, ST_SetSRID(ST_MakePoint(126.939370, 37.566536), 4326), NOW(), NOW()),
+('홍익대학교', '서울 마포구 와우산로 94', 37.550970, 126.925620, ST_SetSRID(ST_MakePoint(126.925620, 37.550970), 4326), NOW(), NOW()),
 -- Restaurants
-('광장시장', '서울 종로구 창경궁로 88', 37.570090, 126.999350, 'restaurant', '전통 먹거리로 유명한 재래시장', NOW(), NOW()),
-('이태원 거리', '서울 용산구 이태원로', 37.534540, 126.994360, 'restaurant', '다양한 세계 음식을 즐길 수 있는 거리', NOW(), NOW())
+('광장시장', '서울 종로구 창경궁로 88', 37.570090, 126.999350, ST_SetSRID(ST_MakePoint(126.999350, 37.570090), 4326), NOW(), NOW()),
+('이태원 거리', '서울 용산구 이태원로', 37.534540, 126.994360, ST_SetSRID(ST_MakePoint(126.994360, 37.534540), 4326), NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- ========================================
 -- 6. Recommendations (with geom for PostGIS)
 -- ========================================
 -- 경복궁에서 Dynamite (김민수)
-INSERT INTO recommendations (user_id, track_id, place_id, comment, latitude, longitude, geom, created_at, updated_at)
+INSERT INTO recommendations (user_id, track_id, place_id, message, lat, lng, geom, created_at, updated_at)
 VALUES (
     (SELECT id FROM users WHERE spotify_id = 'spotify_user_minsu'),
     (SELECT id FROM tracks WHERE spotify_track_id = '0tgVpDi06FyKpA1z0VMD4v'),
-    (SELECT id FROM places WHERE name = '경복궁'),
+    (SELECT id FROM places WHERE place_name = '경복궁'),
     '궁궐을 걸으며 듣기 좋은 신나는 곡!',
     37.579617, 126.977041,
     ST_SetSRID(ST_MakePoint(126.977041, 37.579617), 4326),
@@ -132,11 +129,11 @@ VALUES (
 ) ON CONFLICT DO NOTHING;
 
 -- N서울타워에서 Blinding Lights (이지은)
-INSERT INTO recommendations (user_id, track_id, place_id, comment, latitude, longitude, geom, created_at, updated_at)
+INSERT INTO recommendations (user_id, track_id, place_id, message, lat, lng, geom, created_at, updated_at)
 VALUES (
     (SELECT id FROM users WHERE spotify_id = 'spotify_user_jieun'),
     (SELECT id FROM tracks WHERE spotify_track_id = '0VjIjW4GlUZAMYd2vXMi3b'),
-    (SELECT id FROM places WHERE name = 'N서울타워'),
+    (SELECT id FROM places WHERE place_name = 'N서울타워'),
     '야경을 보며 듣는 The Weeknd 최고!',
     37.551169, 126.988227,
     ST_SetSRID(ST_MakePoint(126.988227, 37.551169), 4326),
@@ -145,11 +142,11 @@ VALUES (
 ) ON CONFLICT DO NOTHING;
 
 -- 한강공원에서 Shape of You (박준호)
-INSERT INTO recommendations (user_id, track_id, place_id, comment, latitude, longitude, geom, created_at, updated_at)
+INSERT INTO recommendations (user_id, track_id, place_id, message, lat, lng, geom, created_at, updated_at)
 VALUES (
     (SELECT id FROM users WHERE spotify_id = 'spotify_user_junho'),
     (SELECT id FROM tracks WHERE spotify_track_id = '7qiZfU4dY1lWllzX7mPBIP'),
-    (SELECT id FROM places WHERE name = '한강공원 여의도'),
+    (SELECT id FROM places WHERE place_name = '한강공원 여의도'),
     '자전거 타면서 듣기 완벽한 곡',
     37.529030, 126.932570,
     ST_SetSRID(ST_MakePoint(126.932570, 37.529030), 4326),
@@ -158,11 +155,11 @@ VALUES (
 ) ON CONFLICT DO NOTHING;
 
 -- 블루보틀에서 Heat Waves (최서연)
-INSERT INTO recommendations (user_id, track_id, place_id, comment, latitude, longitude, geom, created_at, updated_at)
+INSERT INTO recommendations (user_id, track_id, place_id, message, lat, lng, geom, created_at, updated_at)
 VALUES (
     (SELECT id FROM users WHERE spotify_id = 'spotify_user_seoyeon'),
     (SELECT id FROM tracks WHERE spotify_track_id = '2gNfxysfBRfl9Lvi9T3v6R'),
-    (SELECT id FROM places WHERE name = '블루보틀 삼청점'),
+    (SELECT id FROM places WHERE place_name = '블루보틀 삼청점'),
     '커피 마시며 듣는 감성 인디 음악',
     37.584028, 126.982900,
     ST_SetSRID(ST_MakePoint(126.982900, 37.584028), 4326),
@@ -171,11 +168,11 @@ VALUES (
 ) ON CONFLICT DO NOTHING;
 
 -- 홍대에서 Gangnam Style (정우진)
-INSERT INTO recommendations (user_id, track_id, place_id, comment, latitude, longitude, geom, created_at, updated_at)
+INSERT INTO recommendations (user_id, track_id, place_id, message, lat, lng, geom, created_at, updated_at)
 VALUES (
     (SELECT id FROM users WHERE spotify_id = 'spotify_user_woojin'),
     (SELECT id FROM tracks WHERE spotify_track_id = '3XF5xLJHOQQRbWya6hBp7d'),
-    (SELECT id FROM places WHERE name = '홍익대학교'),
+    (SELECT id FROM places WHERE place_name = '홍익대학교'),
     '홍대 거리에서 춤추고 싶어지는 곡!',
     37.550970, 126.925620,
     ST_SetSRID(ST_MakePoint(126.925620, 37.550970), 4326),
@@ -184,11 +181,11 @@ VALUES (
 ) ON CONFLICT DO NOTHING;
 
 -- 서울대에서 Celebrity (김민수)
-INSERT INTO recommendations (user_id, track_id, place_id, comment, latitude, longitude, geom, created_at, updated_at)
+INSERT INTO recommendations (user_id, track_id, place_id, message, lat, lng, geom, created_at, updated_at)
 VALUES (
     (SELECT id FROM users WHERE spotify_id = 'spotify_user_minsu'),
     (SELECT id FROM tracks WHERE spotify_track_id = '5jjmGBEHWVWeDYCpRnqRXC'),
-    (SELECT id FROM places WHERE name = '서울대학교'),
+    (SELECT id FROM places WHERE place_name = '서울대학교'),
     '캠퍼스를 걸으며 듣는 IU',
     37.460800, 126.951900,
     ST_SetSRID(ST_MakePoint(126.951900, 37.460800), 4326),
@@ -197,11 +194,11 @@ VALUES (
 ) ON CONFLICT DO NOTHING;
 
 -- 이태원에서 Mr. Brightside (이지은)
-INSERT INTO recommendations (user_id, track_id, place_id, comment, latitude, longitude, geom, created_at, updated_at)
+INSERT INTO recommendations (user_id, track_id, place_id, message, lat, lng, geom, created_at, updated_at)
 VALUES (
     (SELECT id FROM users WHERE spotify_id = 'spotify_user_jieun'),
     (SELECT id FROM tracks WHERE spotify_track_id = '3n3Ppam7vgaVa1iaRUc9Lp'),
-    (SELECT id FROM places WHERE name = '이태원 거리'),
+    (SELECT id FROM places WHERE place_name = '이태원 거리'),
     '이태원의 밤 분위기와 딱!',
     37.534540, 126.994360,
     ST_SetSRID(ST_MakePoint(126.994360, 37.534540), 4326),
@@ -221,7 +218,7 @@ SELECT
     NOW() - INTERVAL '9 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '궁궐을 걸으며 듣기 좋은 신나는 곡!'
+WHERE r.message = '궁궐을 걸으며 듣기 좋은 신나는 곡!'
 AND u.spotify_id = 'spotify_user_jieun'
 ON CONFLICT DO NOTHING;
 
@@ -233,7 +230,7 @@ SELECT
     NOW() - INTERVAL '8 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '궁궐을 걸으며 듣기 좋은 신나는 곡!'
+WHERE r.message = '궁궐을 걸으며 듣기 좋은 신나는 곡!'
 AND u.spotify_id = 'spotify_user_junho'
 ON CONFLICT DO NOTHING;
 
@@ -245,7 +242,7 @@ SELECT
     NOW() - INTERVAL '7 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '궁궐을 걸으며 듣기 좋은 신나는 곡!'
+WHERE r.message = '궁궐을 걸으며 듣기 좋은 신나는 곡!'
 AND u.spotify_id = 'spotify_user_seoyeon'
 ON CONFLICT DO NOTHING;
 
@@ -258,7 +255,7 @@ SELECT
     NOW() - INTERVAL '7 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '야경을 보며 듣는 The Weeknd 최고!'
+WHERE r.message = '야경을 보며 듣는 The Weeknd 최고!'
 AND u.spotify_id = 'spotify_user_minsu'
 ON CONFLICT DO NOTHING;
 
@@ -270,7 +267,7 @@ SELECT
     NOW() - INTERVAL '6 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '야경을 보며 듣는 The Weeknd 최고!'
+WHERE r.message = '야경을 보며 듣는 The Weeknd 최고!'
 AND u.spotify_id = 'spotify_user_woojin'
 ON CONFLICT DO NOTHING;
 
@@ -283,7 +280,7 @@ SELECT
     NOW() - INTERVAL '6 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '자전거 타면서 듣기 완벽한 곡'
+WHERE r.message = '자전거 타면서 듣기 완벽한 곡'
 AND u.spotify_id = 'spotify_user_jieun'
 ON CONFLICT DO NOTHING;
 
@@ -295,7 +292,7 @@ SELECT
     NOW() - INTERVAL '5 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '자전거 타면서 듣기 완벽한 곡'
+WHERE r.message = '자전거 타면서 듣기 완벽한 곡'
 AND u.spotify_id = 'spotify_user_seoyeon'
 ON CONFLICT DO NOTHING;
 
@@ -308,7 +305,7 @@ SELECT
     NOW() - INTERVAL '4 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '커피 마시며 듣는 감성 인디 음악'
+WHERE r.message = '커피 마시며 듣는 감성 인디 음악'
 AND u.spotify_id = 'spotify_user_minsu'
 ON CONFLICT DO NOTHING;
 
@@ -320,7 +317,7 @@ SELECT
     NOW() - INTERVAL '3 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '커피 마시며 듣는 감성 인디 음악'
+WHERE r.message = '커피 마시며 듣는 감성 인디 음악'
 AND u.spotify_id = 'spotify_user_junho'
 ON CONFLICT DO NOTHING;
 
@@ -332,7 +329,7 @@ SELECT
     NOW() - INTERVAL '2 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '커피 마시며 듣는 감성 인디 음악'
+WHERE r.message = '커피 마시며 듣는 감성 인디 음악'
 AND u.spotify_id = 'spotify_user_woojin'
 ON CONFLICT DO NOTHING;
 
@@ -345,7 +342,7 @@ SELECT
     NOW() - INTERVAL '3 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '홍대 거리에서 춤추고 싶어지는 곡!'
+WHERE r.message = '홍대 거리에서 춤추고 싶어지는 곡!'
 AND u.spotify_id = 'spotify_user_minsu'
 ON CONFLICT DO NOTHING;
 
@@ -357,7 +354,7 @@ SELECT
     NOW() - INTERVAL '2 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '홍대 거리에서 춤추고 싶어지는 곡!'
+WHERE r.message = '홍대 거리에서 춤추고 싶어지는 곡!'
 AND u.spotify_id = 'spotify_user_jieun'
 ON CONFLICT DO NOTHING;
 
@@ -370,7 +367,7 @@ SELECT
     NOW() - INTERVAL '2 days'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '캠퍼스를 걸으며 듣는 IU'
+WHERE r.message = '캠퍼스를 걸으며 듣는 IU'
 AND u.spotify_id = 'spotify_user_jieun'
 ON CONFLICT DO NOTHING;
 
@@ -382,7 +379,7 @@ SELECT
     NOW() - INTERVAL '1 day'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '캠퍼스를 걸으며 듣는 IU'
+WHERE r.message = '캠퍼스를 걸으며 듣는 IU'
 AND u.spotify_id = 'spotify_user_seoyeon'
 ON CONFLICT DO NOTHING;
 
@@ -395,7 +392,7 @@ SELECT
     NOW() - INTERVAL '1 day'
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '이태원의 밤 분위기와 딱!'
+WHERE r.message = '이태원의 밤 분위기와 딱!'
 AND u.spotify_id = 'spotify_user_junho'
 ON CONFLICT DO NOTHING;
 
@@ -407,6 +404,6 @@ SELECT
     NOW()
 FROM recommendations r
 CROSS JOIN users u
-WHERE r.comment = '이태원의 밤 분위기와 딱!'
+WHERE r.message = '이태원의 밤 분위기와 딱!'
 AND u.spotify_id = 'spotify_user_woojin'
 ON CONFLICT DO NOTHING;

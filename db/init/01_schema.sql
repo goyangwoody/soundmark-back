@@ -125,3 +125,18 @@ CREATE TABLE IF NOT EXISTS follows (
 CREATE INDEX IF NOT EXISTS ix_follows_id ON follows (id);
 CREATE INDEX IF NOT EXISTS ix_follows_follower_id ON follows (follower_id);
 CREATE INDEX IF NOT EXISTS ix_follows_following_id ON follows (following_id);
+
+-- ========================================
+-- 8. Refresh Tokens Table (JWT refresh tokens)
+-- ========================================
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    token VARCHAR NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMP NOT NULL,
+    revoked BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_refresh_tokens_id ON refresh_tokens (id);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_refresh_tokens_token ON refresh_tokens (token);
