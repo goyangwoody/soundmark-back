@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:15-3.4
+    container_name: soundmark-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-soundmark_db}
+      POSTGRES_USER: ${POSTGRES_USER:-soundmark}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-soundmark}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: soundmark-api
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
+      - SPOTIFY_REDIRECT_URI=${SPOTIFY_REDIRECT_URI}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_ACCESS_TOKEN_EXPIRE_DAYS=${JWT_ACCESS_TOKEN_EXPIRE_DAYS:-7}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+      - DEBUG=${DEBUG:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+
+  nginx:
+    image: nginx:alpine
+    container_name: soundmark-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    restart: always
+
+volumes:
+  pgdata:

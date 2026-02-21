@@ -914,7 +914,39 @@ alembic revision --autogenerate -m "Add new feature"
 
 ## 배포
 
-### Docker Hub 이미지 빌드
+### 📦 EC2 Production Deployment
+
+이 프로젝트는 AWS EC2에서 Docker Compose를 사용한 단일 인스턴스 배포를 지원합니다.
+
+**Quick Start:**
+- [DEPLOYMENT_QUICKSTART.md](DEPLOYMENT_QUICKSTART.md) - 5분 내 빠른 배포
+- [DEPLOYMENT.md](DEPLOYMENT.md) - 상세 가이드 및 트러블슈팅
+
+**배포 스택:**
+- FastAPI (Uvicorn with 2+ workers)
+- PostgreSQL + PostGIS (Docker volume)
+- Nginx (Reverse proxy)
+
+**배포 파일:**
+- `docker-compose.prod.yml` - Production 설정
+- `nginx.conf` - Nginx 리버스 프록시 설정
+- `.env.example` - 환경 변수 템플릿
+
+```bash
+# 로컬에서 프로덕션 설정 테스트
+docker-compose -f docker-compose.prod.yml up --build
+
+# EC2 배포 (자세한 내용은 DEPLOYMENT.md 참조)
+ssh ubuntu@YOUR_EC2_IP
+git clone <repo>
+cd soundmark-back
+cp .env.example .env
+nano .env  # 환경변수 설정
+docker-compose -f docker-compose.prod.yml up -d --build
+docker-compose -f docker-compose.prod.yml exec api alembic upgrade head
+```
+
+### Docker Hub 이미지 빌드 (선택사항)
 ```bash
 # 이미지 빌드
 docker build -t soundmark-api:latest .
@@ -927,15 +959,19 @@ docker push your-registry/soundmark-api:v1.0.0
 ### 프로덕션 환경 변수
 ```env
 DEBUG=false
-DATABASE_URL=postgresql+asyncpg://user:pass@prod-db:5432/soundmark
-JWT_SECRET_KEY=<64자 이상 강력한 키>
+DATABASE_URL=postgresql+asyncpg://user:pass@db:5432/soundmark_db
+POSTGRES_PASSWORD=secure_password_here
+JWT_SECRET_KEY=<Generate with: openssl rand -hex 32>
 ALLOWED_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
+SPOTIFY_CLIENT_ID=your_spotify_client_id
+SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+SPOTIFY_REDIRECT_URI=https://yourdomain.com/api/v1/auth/spotify/callback
 ```
 
 ### 헬스 체크
 ```bash
-curl http://localhost:8000/health
-# {"status": "healthy"}
+curl http://localhost:8000/docs
+curl http://YOUR_EC2_IP/docs
 ```
 
 ---
