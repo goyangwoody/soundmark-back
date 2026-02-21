@@ -14,6 +14,7 @@ class SpotifyAuthRequest(BaseModel):
 class TokenResponse(BaseModel):
     """Response model for authentication token"""
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
     expires_in: int  # seconds
 
@@ -46,3 +47,8 @@ class SpotifyVerifyRequest(BaseModel):
     spotify_access_token: str
     spotify_refresh_token: str
     expires_in: int = 3600  # Default 1 hour
+
+
+class RefreshTokenRequest(BaseModel):
+    """Request model for JWT token refresh"""
+    refresh_token: str

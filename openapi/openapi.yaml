@@ -1,50 +1,5 @@
 components:
   schemas:
-    ActiveRecommendation:
-      description: Individual active recommendation (within 200m)
-      properties:
-        distance_meters:
-          title: Distance Meters
-          type: number
-        id:
-          title: Id
-          type: integer
-        lat:
-          title: Lat
-          type: number
-        lng:
-          title: Lng
-          type: number
-        message:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Message
-        reactions:
-          additionalProperties:
-            type: integer
-          description: Emoji reactions with counts
-          title: Reactions
-          type: object
-        track:
-          $ref: '#/components/schemas/TrackResponse'
-        user:
-          $ref: '#/components/schemas/UserResponse'
-        user_reaction:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Current user's reaction emoji
-          title: User Reaction
-      required:
-      - id
-      - lat
-      - lng
-      - distance_meters
-      - track
-      - user
-      title: ActiveRecommendation
-      type: object
     FollowResponse:
       description: Response for follow/unfollow actions
       properties:
@@ -104,41 +59,14 @@ components:
           type: array
       title: HTTPValidationError
       type: object
-    InactiveCluster:
-      description: Cluster of inactive recommendations (beyond 200m)
-      properties:
-        count:
-          description: Number of recommendations in cluster
-          title: Count
-          type: integer
-        lat:
-          description: Center latitude of cluster
-          title: Lat
-          type: number
-        lng:
-          description: Center longitude of cluster
-          title: Lng
-          type: number
-      required:
-      - lat
-      - lng
-      - count
-      title: InactiveCluster
-      type: object
     MapResponse:
-      description: Map view response with active and inactive recommendations
+      description: Map view response with all recommendations within 2km
       properties:
-        active_recommendations:
-          description: Recommendations within 200m radius
+        recommendations:
+          description: All recommendations within 2km radius
           items:
-            $ref: '#/components/schemas/ActiveRecommendation'
-          title: Active Recommendations
-          type: array
-        inactive_counts:
-          description: Clustered counts for distant recommendations
-          items:
-            $ref: '#/components/schemas/InactiveCluster'
-          title: Inactive Counts
+            $ref: '#/components/schemas/RecommendationItem'
+          title: Recommendations
           type: array
       title: MapResponse
       type: object
@@ -275,6 +203,44 @@ components:
       - created_at
       title: RecommendationDetailResponse
       type: object
+    RecommendationItem:
+      description: Individual recommendation item
+      properties:
+        distance_meters:
+          title: Distance Meters
+          type: number
+        id:
+          title: Id
+          type: integer
+        is_active:
+          description: True if within 200m, False otherwise
+          title: Is Active
+          type: boolean
+        lat:
+          title: Lat
+          type: number
+        lng:
+          title: Lng
+          type: number
+        total_reactions:
+          default: 0
+          description: Total count of all reactions
+          title: Total Reactions
+          type: integer
+        track:
+          $ref: '#/components/schemas/TrackResponse'
+        user:
+          $ref: '#/components/schemas/UserResponse'
+      required:
+      - id
+      - lat
+      - lng
+      - distance_meters
+      - is_active
+      - track
+      - user
+      title: RecommendationItem
+      type: object
     RecommendationReactionRequest:
       description: Request model for adding/updating emoji reaction
       properties:
@@ -358,6 +324,16 @@ components:
       - created_at
       title: RecommendationResponse
       type: object
+    RefreshTokenRequest:
+      description: Request model for JWT token refresh
+      properties:
+        refresh_token:
+          title: Refresh Token
+          type: string
+      required:
+      - refresh_token
+      title: RefreshTokenRequest
+      type: object
     SpotifyLoginResponse:
       description: Response model for Spotify login URL
       properties:
@@ -395,12 +371,16 @@ components:
         expires_in:
           title: Expires In
           type: integer
+        refresh_token:
+          title: Refresh Token
+          type: string
         token_type:
           default: bearer
           title: Token Type
           type: string
       required:
       - access_token
+      - refresh_token
       - expires_in
       title: TokenResponse
       type: object
@@ -617,11 +597,19 @@ paths:
       - Authentication
   /api/v1/auth/refresh:
     post:
-      description: "Refresh JWT token\n\nThis endpoint can be used to get a new JWT\
-        \ token.\nIn the future, this could also refresh the Spotify token if needed.\n\
-        \nRequires:\n    Valid JWT token in Authorization header\n    \nReturns:\n\
-        \    New JWT access token"
+      description: "Refresh JWT access token using refresh token\n\nClient sends refresh\
+        \ token to get a new access token + new refresh token.\nOld refresh token\
+        \ is revoked after successful refresh.\n\nArgs:\n    request: Refresh token\
+        \ request with refresh_token\n    db: Database session\n    \nReturns:\n \
+        \   New access token and new refresh token\n    \nRaises:\n    401: If refresh\
+        \ token is invalid, expired, or revoked"
       operationId: refresh_token_api_v1_auth_refresh_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+        required: true
       responses:
         '200':
           content:
@@ -629,8 +617,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenResponse'
           description: Successful Response
-      security:
-      - HTTPBearer: []
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
       summary: Refresh Token
       tags:
       - Authentication
@@ -722,12 +714,12 @@ paths:
       - Authentication
   /api/v1/map/nearby:
     get:
-      description: "Get map data with active and inactive recommendations\n\n**Active\
-        \ recommendations**: Within 200m radius, returns full details\n**Inactive\
-        \ counts**: Beyond 200m, returns clustered counts\n\nRequires authentication.\n\
-        \nArgs:\n    lat: User's current latitude\n    lng: User's current longitude\n\
-        \    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n\
-        \    Map data with active recommendations and inactive clusters"
+      description: "Get all recommendations within 2km radius\n\n**Active**: Within\
+        \ 200m radius (is_active=True)\n**Inactive**: Beyond 200m but within 2km (is_active=False)\n\
+        \nRequires authentication.\n\nArgs:\n    lat: User's current latitude\n  \
+        \  lng: User's current longitude\n    current_user: Authenticated user\n \
+        \   db: Database session\n    \nReturns:\n    All recommendations within 2km\
+        \ with active/inactive status"
       operationId: get_nearby_map_data_api_v1_map_nearby_get
       parameters:
       - description: User's current latitude

@@ -26,6 +26,7 @@ from app.models.place import Place
 from app.models.recommendation import Recommendation
 from app.models.like import RecommendationLike
 from app.models.follow import Follow
+from app.models.refresh_token import RefreshToken
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

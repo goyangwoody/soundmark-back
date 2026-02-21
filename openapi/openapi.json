@@ -150,8 +150,18 @@
           "Authentication"
         ],
         "summary": "Refresh Token",
-        "description": "Refresh JWT token\n\nThis endpoint can be used to get a new JWT token.\nIn the future, this could also refresh the Spotify token if needed.\n\nRequires:\n    Valid JWT token in Authorization header\n    \nReturns:\n    New JWT access token",
+        "description": "Refresh JWT access token using refresh token\n\nClient sends refresh token to get a new access token + new refresh token.\nOld refresh token is revoked after successful refresh.\n\nArgs:\n    request: Refresh token request with refresh_token\n    db: Database session\n    \nReturns:\n    New access token and new refresh token\n    \nRaises:\n    401: If refresh token is invalid, expired, or revoked",
         "operationId": "refresh_token_api_v1_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -162,13 +172,18 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/recommendations": {
@@ -449,7 +464,7 @@
           "Map"
         ],
         "summary": "Get Nearby Map Data",
-        "description": "Get map data with active and inactive recommendations\n\n**Active recommendations**: Within 200m radius, returns full details\n**Inactive counts**: Beyond 200m, returns clustered counts\n\nRequires authentication.\n\nArgs:\n    lat: User's current latitude\n    lng: User's current longitude\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    Map data with active recommendations and inactive clusters",
+        "description": "Get all recommendations within 2km radius\n\n**Active**: Within 200m radius (is_active=True)\n**Inactive**: Beyond 200m but within 2km (is_active=False)\n\nRequires authentication.\n\nArgs:\n    lat: User's current latitude\n    lng: User's current longitude\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    All recommendations within 2km with active/inactive status",
         "operationId": "get_nearby_map_data_api_v1_map_nearby_get",
         "security": [
           {
@@ -852,74 +867,6 @@
   },
   "components": {
     "schemas": {
-      "ActiveRecommendation": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "lat": {
-            "type": "number",
-            "title": "Lat"
-          },
-          "lng": {
-            "type": "number",
-            "title": "Lng"
-          },
-          "distance_meters": {
-            "type": "number",
-            "title": "Distance Meters"
-          },
-          "track": {
-            "$ref": "#/components/schemas/TrackResponse"
-          },
-          "user": {
-            "$ref": "#/components/schemas/UserResponse"
-          },
-          "message": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Message"
-          },
-          "reactions": {
-            "additionalProperties": {
-              "type": "integer"
-            },
-            "type": "object",
-            "title": "Reactions",
-            "description": "Emoji reactions with counts"
-          },
-          "user_reaction": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Reaction",
-            "description": "Current user's reaction emoji"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "lat",
-          "lng",
-          "distance_meters",
-          "track",
-          "user"
-        ],
-        "title": "ActiveRecommendation",
-        "description": "Individual active recommendation (within 200m)"
-      },
       "FollowResponse": {
         "properties": {
           "success": {
@@ -1001,55 +948,20 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "InactiveCluster": {
-        "properties": {
-          "lat": {
-            "type": "number",
-            "title": "Lat",
-            "description": "Center latitude of cluster"
-          },
-          "lng": {
-            "type": "number",
-            "title": "Lng",
-            "description": "Center longitude of cluster"
-          },
-          "count": {
-            "type": "integer",
-            "title": "Count",
-            "description": "Number of recommendations in cluster"
-          }
-        },
-        "type": "object",
-        "required": [
-          "lat",
-          "lng",
-          "count"
-        ],
-        "title": "InactiveCluster",
-        "description": "Cluster of inactive recommendations (beyond 200m)"
-      },
       "MapResponse": {
         "properties": {
-          "active_recommendations": {
+          "recommendations": {
             "items": {
-              "$ref": "#/components/schemas/ActiveRecommendation"
+              "$ref": "#/components/schemas/RecommendationItem"
             },
             "type": "array",
-            "title": "Active Recommendations",
-            "description": "Recommendations within 200m radius"
-          },
-          "inactive_counts": {
-            "items": {
-              "$ref": "#/components/schemas/InactiveCluster"
-            },
-            "type": "array",
-            "title": "Inactive Counts",
-            "description": "Clustered counts for distant recommendations"
+            "title": "Recommendations",
+            "description": "All recommendations within 2km radius"
           }
         },
         "type": "object",
         "title": "MapResponse",
-        "description": "Map view response with active and inactive recommendations"
+        "description": "Map view response with all recommendations within 2km"
       },
       "PlaceInput": {
         "properties": {
@@ -1272,6 +1184,55 @@
         "title": "RecommendationDetailResponse",
         "description": "Detailed recommendation response (used in detail view)"
       },
+      "RecommendationItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "lng": {
+            "type": "number",
+            "title": "Lng"
+          },
+          "distance_meters": {
+            "type": "number",
+            "title": "Distance Meters"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "True if within 200m, False otherwise"
+          },
+          "track": {
+            "$ref": "#/components/schemas/TrackResponse"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          },
+          "total_reactions": {
+            "type": "integer",
+            "title": "Total Reactions",
+            "description": "Total count of all reactions",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "lat",
+          "lng",
+          "distance_meters",
+          "is_active",
+          "track",
+          "user"
+        ],
+        "title": "RecommendationItem",
+        "description": "Individual recommendation item"
+      },
       "RecommendationReactionRequest": {
         "properties": {
           "emoji": {
@@ -1399,6 +1360,20 @@
         "title": "RecommendationResponse",
         "description": "Basic recommendation response (used in list views)"
       },
+      "RefreshTokenRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenRequest",
+        "description": "Request model for JWT token refresh"
+      },
       "SpotifyLoginResponse": {
         "properties": {
           "authorization_url": {
@@ -1443,6 +1418,10 @@
             "type": "string",
             "title": "Access Token"
           },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
           "token_type": {
             "type": "string",
             "title": "Token Type",
@@ -1456,6 +1435,7 @@
         "type": "object",
         "required": [
           "access_token",
+          "refresh_token",
           "expires_in"
         ],
         "title": "TokenResponse",

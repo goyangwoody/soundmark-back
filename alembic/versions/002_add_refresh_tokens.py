@@ -1,0 +1,41 @@
+"""Add refresh tokens table
+
+Revision ID: 002_add_refresh_tokens
+Revises: 001_initial_schema_with_postgis_support
+Create Date: 2026-02-21
+
+"""
+from alembic import op
+import sqlalchemy as sa
+from datetime import datetime
+
+
+# revision identifiers, used by Alembic.
+revision = '002_add_refresh_tokens'
+down_revision = '001_initial_schema_with_postgis_support'
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    """Add refresh_tokens table"""
+    op.create_table(
+        'refresh_tokens',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('token', sa.String(), nullable=False),
+        sa.Column('user_id', sa.Integer(), nullable=False),
+        sa.Column('expires_at', sa.DateTime(), nullable=False),
+        sa.Column('revoked', sa.Boolean(), nullable=False, server_default='false'),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.PrimaryKeyConstraint('id'),
+        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    )
+    op.create_index(op.f('ix_refresh_tokens_id'), 'refresh_tokens', ['id'], unique=False)
+    op.create_index(op.f('ix_refresh_tokens_token'), 'refresh_tokens', ['token'], unique=True)
+
+
+def downgrade() -> None:
+    """Drop refresh_tokens table"""
+    op.drop_index(op.f('ix_refresh_tokens_token'), table_name='refresh_tokens')
+    op.drop_index(op.f('ix_refresh_tokens_id'), table_name='refresh_tokens')
+    op.drop_table('refresh_tokens')

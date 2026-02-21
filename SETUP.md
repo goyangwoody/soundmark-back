@@ -144,7 +144,7 @@ You should see the interactive API documentation with all endpoints.
 1. Use `/api/v1/map/nearby` with your coordinates:
    - `lat=37.5665`
    - `lng=126.9780`
-2. Should return nearby recommendations
+2. Should return all recommendations within 2km (with is_active status)
 
 ---
 

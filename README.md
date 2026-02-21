@@ -279,7 +279,7 @@ JWT 토큰 갱신
 ### 🗺️ 지도 (Map) - `/api/v1/map`
 
 #### `GET /map/nearby`
-주변 추천곡 지도 데이터 조회
+주변 추천곡 지도 데이터 조회 (2km 반경)
 - **인증 필요**: ✅
 - **파라미터**:
   - `lat` (query, 현재 위치 위도, required)
@@ -287,35 +287,35 @@ JWT 토큰 갱신
 - **응답**: `MapResponse`
   ```json
   {
-    "active_recommendations": [
+    "recommendations": [
       {
         "id": 123,
         "lat": 37.5665,
         "lng": 126.9780,
         "distance_meters": 150.5,
+        "is_active": true,
         "track": { /* TrackResponse */ },
         "user": { /* UserResponse */ },
-        "message": "이 카페에서 들으면 좋아요!",
-        "reactions": {
-          "❤️": 3,
-          "👍": 2
-        },
-        "user_reaction": "❤️"
-      }
-    ],
-    "inactive_counts": [
+        "total_reactions": 5
+      },
       {
-        "lat": 37.5700,
-        "lng": 126.9800,
-        "count": 12
+        "id": 124,
+        "lat": 37.5680,
+        "lng": 126.9790,
+        "distance_meters": 850.2,
+        "is_active": false,
+        "track": { /* TrackResponse */ },
+        "user": { /* UserResponse */ },
+        "total_reactions": 12
       }
     ]
   }
   ```
 - **로직**:
-  1. **Active (200m 이내)**: 개별 핀으로 표시 (track, user 포함)
-  2. **Inactive (200m 초과)**: 400m 격자 클러스터링 → 개수만 반환
-  3. PostGIS `ST_DWithin`, `ST_Distance` 사용
+  1. **2km 반경** 내 모든 추천 반환
+  2. **is_active**: 200m 이내면 `true`, 초과면 `false`
+  3. **total_reactions**: 모든 이모지 반응의 합계
+  4. PostGIS `ST_DWithin`, `ST_Distance` 사용
 
 ---
 
@@ -654,7 +654,7 @@ users ─┬─ oauth_accounts
 | `get_nearby_recommendations(db, lat, lng, radius)` | 반경 내 추천곡 조회 (거리 포함) |
 | `get_distant_recommendations(db, lat, lng, min_radius, max_radius)` | 원거리 추천곡 조회 |
 | `cluster_recommendations_by_grid(recommendations, grid_size)` | 격자 클러스터링 (400m 단위) |
-| `get_map_data(db, lat, lng, active_radius, grid_size)` | 지도 데이터 (active + inactive) |
+| `get_map_data(db, lat, lng, radius_meters=2000)` | 지도 데이터 (2km 반경 내 모든 추천) |
 
 **클러스터링 알고리즘**:
 ```python
@@ -934,25 +934,18 @@ class RecommendationDetailResponse(RecommendationResponse):
 
 ### 지도 스키마 (`schemas/map.py`)
 ```python
-class ActiveRecommendation(BaseModel):
+class RecommendationItem(BaseModel):
     id: int
     lat: float
     lng: float
     distance_meters: float
+    is_active: bool                 # 200m 이내 여부
     track: TrackResponse
     user: UserResponse              # 업로더 정보
-    message: Optional[str]
-    reactions: Dict[str, int] = {}  # 이모지 반응
-    user_reaction: Optional[str] = None  # 현재 사용자의 반응
-
-class InactiveCluster(BaseModel):
-    lat: float                      # 클러스터 중심 위도
-    lng: float                      # 클러스터 중심 경도
-    count: int                      # 추천곡 개수
+    total_reactions: int            # 전체 반응 수 합계
 
 class MapResponse(BaseModel):
-    active_recommendations: List[ActiveRecommendation]
-    inactive_counts: List[InactiveCluster]
+    recommendations: List[RecommendationItem]  # 2km 반경 내 모든 추천
 ```
 
 ---

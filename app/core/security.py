@@ -3,6 +3,7 @@ Security utilities for JWT authentication
 """
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
+import secrets
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
@@ -186,3 +187,24 @@ def get_password_hash(password: str) -> str:
         Hashed password
     """
     return pwd_context.hash(password)
+
+
+def create_refresh_token() -> str:
+    """
+    Create a secure random refresh token
+    
+    Returns:
+        Random token string (URL-safe)
+    """
+    return secrets.token_urlsafe(32)
+
+
+def get_refresh_token_expire_time() -> datetime:
+    """
+    Get refresh token expiration datetime
+    
+    Returns:
+        Expiration datetime (30 days from now by default)
+    """
+    return datetime.utcnow() + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
+

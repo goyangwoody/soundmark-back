@@ -153,35 +153,23 @@ async def get_map_data(
     db: AsyncSession,
     user_lat: float,
     user_lng: float,
-    active_radius_meters: float = 200,
-    grid_size_meters: float = 400
-) -> Tuple[List[Tuple[Recommendation, float]], List[Dict[str, any]]]:
+    radius_meters: float = 2000
+) -> List[Tuple[Recommendation, float]]:
     """
-    Get map data with active recommendations and inactive clusters
+    Get all recommendations within specified radius with distances
     
     Args:
         db: Database session
         user_lat: User's latitude
         user_lng: User's longitude
-        active_radius_meters: Radius for active recommendations (default 200m)
-        grid_size_meters: Grid size for clustering distant recommendations (default 400m)
+        radius_meters: Search radius in meters (default 2000m = 2km)
         
     Returns:
-        Tuple of (active_recommendations_with_distances, inactive_clusters)
+        List of (Recommendation, distance_meters) tuples
     """
-    # Get active recommendations (within radius)
-    active_recommendations = await get_nearby_recommendations(
-        db, user_lat, user_lng, active_radius_meters
+    # Get all recommendations within radius
+    recommendations = await get_nearby_recommendations(
+        db, user_lat, user_lng, radius_meters
     )
     
-    # Get distant recommendations (beyond radius)
-    distant_recommendations = await get_distant_recommendations(
-        db, user_lat, user_lng, min_radius_meters=active_radius_meters
-    )
-    
-    # Cluster distant recommendations
-    inactive_clusters = cluster_recommendations_by_grid(
-        distant_recommendations, grid_size_meters
-    )
-    
-    return (active_recommendations, inactive_clusters)
+    return recommendations

@@ -11,15 +11,22 @@ from sqlalchemy import select
 from app.database import get_db
 from app.models.user import User
 from app.models.oauth import OAuthAccount
+from app.models.refresh_token import RefreshToken
 from app.schemas.auth import (
     SpotifyLoginResponse,
     SpotifyCallbackRequest,
     SpotifyVerifyRequest,
+    RefreshTokenRequest,
     TokenResponse,
     UserResponse
 )
 from app.services.spotify import spotify_service
-from app.core.security import create_access_token, get_current_user
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    get_refresh_token_expire_time,
+    get_current_user
+)
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -147,8 +154,19 @@ async def spotify_callback(
     # Create our service JWT token
     jwt_token = create_access_token(data={"sub": str(user.id)})
     
+    # Create refresh token
+    refresh_token_str = create_refresh_token()
+    refresh_token_db = RefreshToken(
+        token=refresh_token_str,
+        user_id=user.id,
+        expires_at=get_refresh_token_expire_time()
+    )
+    db.add(refresh_token_db)
+    await db.commit()
+    
     return TokenResponse(
         access_token=jwt_token,
+        refresh_token=refresh_token_str,
         token_type="bearer",
         expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_DAYS * 24 * 3600  # Convert days to seconds
     )
@@ -253,10 +271,21 @@ async def verify_spotify_token(
     # Create our service JWT token
     jwt_token = create_access_token(data={"sub": str(user.id)})
     
+    # Create refresh token
+    refresh_token_str = create_refresh_token()
+    refresh_token_db = RefreshToken(
+        token=refresh_token_str,
+        user_id=user.id,
+        expires_at=get_refresh_token_expire_time()
+    )
+    db.add(refresh_token_db)
+    await db.commit()
+    
     logger.info(f"User {user.id} ({spotify_id}) authenticated via Spotify token verification")
     
     return TokenResponse(
         access_token=jwt_token,
+        refresh_token=refresh_token_str,
         token_type="bearer",
         expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_DAYS * 24 * 3600
     )
@@ -280,26 +309,83 @@ async def get_current_user_info(
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
-    current_user: User = Depends(get_current_user),
+    request: RefreshTokenRequest,
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Refresh JWT token
+    Refresh JWT access token using refresh token
     
-    This endpoint can be used to get a new JWT token.
-    In the future, this could also refresh the Spotify token if needed.
+    Client sends refresh token to get a new access token + new refresh token.
+    Old refresh token is revoked after successful refresh.
     
-    Requires:
-        Valid JWT token in Authorization header
+    Args:
+        request: Refresh token request with refresh_token
+        db: Database session
         
     Returns:
-        New JWT access token
+        New access token and new refresh token
+        
+    Raises:
+        401: If refresh token is invalid, expired, or revoked
     """
-    # Create new JWT token
-    jwt_token = create_access_token(data={"sub": str(current_user.id)})
+    # Find refresh token in database
+    result = await db.execute(
+        select(RefreshToken).where(
+            RefreshToken.token == request.refresh_token,
+            RefreshToken.revoked == False
+        )
+    )
+    refresh_token_db = result.scalar_one_or_none()
+    
+    if not refresh_token_db:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
+        )
+    
+    # Check if token is expired
+    if refresh_token_db.expires_at < datetime.utcnow():
+        # Revoke expired token
+        refresh_token_db.revoked = True
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token expired"
+        )
+    
+    # Get user
+    result = await db.execute(
+        select(User).where(User.id == refresh_token_db.user_id)
+    )
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+    
+    # Revoke old refresh token
+    refresh_token_db.revoked = True
+    
+    # Create new JWT access token
+    jwt_token = create_access_token(data={"sub": str(user.id)})
+    
+    # Create new refresh token
+    new_refresh_token_str = create_refresh_token()
+    new_refresh_token_db = RefreshToken(
+        token=new_refresh_token_str,
+        user_id=user.id,
+        expires_at=get_refresh_token_expire_time()
+    )
+    db.add(new_refresh_token_db)
+    await db.commit()
+    
+    logger.info(f"User {user.id} refreshed token")
     
     return TokenResponse(
         access_token=jwt_token,
+        refresh_token=new_refresh_token_str,
         token_type="bearer",
         expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_DAYS * 24 * 3600
     )
