@@ -36,6 +36,13 @@ class SpotifyLoginResponse(BaseModel):
 
 
 class SpotifyCallbackRequest(BaseModel):
-    """Request model for Spotify OAuth callback"""
+    """Request model for Spotify OAuth callback (deprecated)"""
     code: str
     state: Optional[str] = None
+
+
+class SpotifyVerifyRequest(BaseModel):
+    """Request model for Spotify token verification"""
+    spotify_access_token: str
+    spotify_refresh_token: str
+    expires_in: int = 3600  # Default 1 hour
