@@ -130,3 +130,54 @@ class TrackPlaceCard(BaseModel):
 class PlaceRecommendationResponse(BaseModel):
     """Response for genre-based place recommendation — one card per track"""
     cards: list[TrackPlaceCard] = Field(..., description="One card per recently played track")
+
+
+# ========================================
+# LLM-based Recommendation (v2)
+# ========================================
+
+class LLMRecommendedTrack(BaseModel):
+    """A track recommended by the LLM"""
+    title: str
+    artist: str
+
+
+class MatchedRecommendation(BaseModel):
+    """A recommendation from our DB that matches an LLM-recommended track"""
+    recommendation_id: int
+    track: TrackResponse
+    message: Optional[str] = None
+    place_name: Optional[str] = None
+    address: Optional[str] = None
+    lat: float
+    lng: float
+    created_by: UserResponse
+
+
+class LLMPlaceResult(BaseModel):
+    """A place where LLM-recommended tracks have been planted, with extracted keywords"""
+    llm_track: LLMRecommendedTrack = Field(..., description="The track LLM recommended")
+    matched_recommendations: list[MatchedRecommendation] = Field(
+        ..., description="Recommendations in our DB matching this track"
+    )
+    place_keywords: list[str] = Field(
+        default_factory=list,
+        description="Keywords extracted from recommendation messages at these places"
+    )
+
+
+class LLMRecommendationResponse(BaseModel):
+    """Full response for LLM-based recommendation (v2)"""
+    user_taste_keywords: list[str] = Field(
+        ..., description="Keywords describing the user's music taste"
+    )
+    llm_recommended_tracks: list[LLMRecommendedTrack] = Field(
+        ..., description="All 10 tracks recommended by the LLM"
+    )
+    results: list[LLMPlaceResult] = Field(
+        ..., description="Matched results with places and keywords (only tracks found in DB)"
+    )
+    unmatched_tracks: list[LLMRecommendedTrack] = Field(
+        default_factory=list,
+        description="LLM-recommended tracks not found in our DB"
+    )

@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_DAYS: int = 7
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30  # Refresh token: 30 days
     
+    # OpenAI
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o"
+    
     # CORS
     ALLOWED_ORIGINS: str = "http://localhost:3000"
     

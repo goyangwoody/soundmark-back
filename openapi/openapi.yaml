@@ -59,6 +59,79 @@ components:
           type: array
       title: HTTPValidationError
       type: object
+    LLMPlaceResult:
+      description: A place where LLM-recommended tracks have been planted, with extracted
+        keywords
+      properties:
+        llm_track:
+          allOf:
+          - $ref: '#/components/schemas/LLMRecommendedTrack'
+          description: The track LLM recommended
+        matched_recommendations:
+          description: Recommendations in our DB matching this track
+          items:
+            $ref: '#/components/schemas/MatchedRecommendation'
+          title: Matched Recommendations
+          type: array
+        place_keywords:
+          description: Keywords extracted from recommendation messages at these places
+          items:
+            type: string
+          title: Place Keywords
+          type: array
+      required:
+      - llm_track
+      - matched_recommendations
+      title: LLMPlaceResult
+      type: object
+    LLMRecommendationResponse:
+      description: Full response for LLM-based recommendation (v2)
+      properties:
+        llm_recommended_tracks:
+          description: All 10 tracks recommended by the LLM
+          items:
+            $ref: '#/components/schemas/LLMRecommendedTrack'
+          title: Llm Recommended Tracks
+          type: array
+        results:
+          description: Matched results with places and keywords (only tracks found
+            in DB)
+          items:
+            $ref: '#/components/schemas/LLMPlaceResult'
+          title: Results
+          type: array
+        unmatched_tracks:
+          description: LLM-recommended tracks not found in our DB
+          items:
+            $ref: '#/components/schemas/LLMRecommendedTrack'
+          title: Unmatched Tracks
+          type: array
+        user_taste_keywords:
+          description: Keywords describing the user's music taste
+          items:
+            type: string
+          title: User Taste Keywords
+          type: array
+      required:
+      - user_taste_keywords
+      - llm_recommended_tracks
+      - results
+      title: LLMRecommendationResponse
+      type: object
+    LLMRecommendedTrack:
+      description: A track recommended by the LLM
+      properties:
+        artist:
+          title: Artist
+          type: string
+        title:
+          title: Title
+          type: string
+      required:
+      - title
+      - artist
+      title: LLMRecommendedTrack
+      type: object
     MapResponse:
       description: Map view response with all recommendations within 10km
       properties:
@@ -69,6 +142,72 @@ components:
           title: Recommendations
           type: array
       title: MapResponse
+      type: object
+    MatchedRecommendation:
+      description: A recommendation from our DB that matches an LLM-recommended track
+      properties:
+        address:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Address
+        created_by:
+          $ref: '#/components/schemas/UserResponse'
+        lat:
+          title: Lat
+          type: number
+        lng:
+          title: Lng
+          type: number
+        message:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message
+        place_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Place Name
+        recommendation_id:
+          title: Recommendation Id
+          type: integer
+        track:
+          $ref: '#/components/schemas/TrackResponse'
+      required:
+      - recommendation_id
+      - track
+      - lat
+      - lng
+      - created_by
+      title: MatchedRecommendation
+      type: object
+    PlaceInfo:
+      description: Place information for genre-based recommendation
+      properties:
+        address:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Address
+        lat:
+          title: Lat
+          type: number
+        lng:
+          title: Lng
+          type: number
+        place_id:
+          title: Place Id
+          type: integer
+        place_name:
+          title: Place Name
+          type: string
+      required:
+      - place_id
+      - place_name
+      - lat
+      - lng
+      title: PlaceInfo
       type: object
     PlaceInput:
       description: Place information input (Google or manual)
@@ -94,6 +233,73 @@ components:
       - source
       - place_name
       title: PlaceInput
+      type: object
+    PlaceRecommendationResponse:
+      description: Response for genre-based place recommendation — one card per track
+      properties:
+        cards:
+          description: One card per recently played track
+          items:
+            $ref: '#/components/schemas/TrackPlaceCard'
+          title: Cards
+          type: array
+      required:
+      - cards
+      title: PlaceRecommendationResponse
+      type: object
+    PopularTrackItem:
+      description: Single popular track with recommendation count
+      properties:
+        artist:
+          title: Artist
+          type: string
+        recommendation_count:
+          title: Recommendation Count
+          type: integer
+        spotify_track_id:
+          title: Spotify Track Id
+          type: string
+        title:
+          title: Title
+          type: string
+      required:
+      - spotify_track_id
+      - title
+      - artist
+      - recommendation_count
+      title: PopularTrackItem
+      type: object
+    PopularTracksResponse:
+      description: Response for popular tracks endpoint
+      properties:
+        total:
+          title: Total
+          type: integer
+        tracks:
+          items:
+            $ref: '#/components/schemas/PopularTrackItem'
+          title: Tracks
+          type: array
+      required:
+      - tracks
+      - total
+      title: PopularTracksResponse
+      type: object
+    RecentlyPlayedResponse:
+      description: Response for recently played tracks
+      properties:
+        total:
+          title: Total
+          type: integer
+        tracks:
+          items:
+            $ref: '#/components/schemas/RecentlyPlayedTrack'
+          title: Tracks
+          type: array
+      required:
+      - tracks
+      - total
+      title: RecentlyPlayedResponse
       type: object
     RecentlyPlayedTrack:
       description: Recently played track from Spotify
@@ -134,127 +340,6 @@ components:
       - track_url
       - played_at
       title: RecentlyPlayedTrack
-      type: object
-    RecentlyPlayedResponse:
-      description: Response for recently played tracks
-      properties:
-        total:
-          title: Total
-          type: integer
-        tracks:
-          items:
-            $ref: '#/components/schemas/RecentlyPlayedTrack'
-          title: Tracks
-          type: array
-      required:
-      - tracks
-      - total
-      title: RecentlyPlayedResponse
-      type: object
-    TrackWithGenres:
-      description: Recently played track with artist genres
-      properties:
-        spotify_track_id:
-          title: Spotify Track Id
-          type: string
-        title:
-          title: Title
-          type: string
-        artist:
-          title: Artist
-          type: string
-        album:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Album
-        album_cover_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Album Cover Url
-        track_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Track Url
-        genres:
-          items:
-            type: string
-          title: Genres
-          type: array
-      required:
-      - spotify_track_id
-      - title
-      - artist
-      - genres
-      title: TrackWithGenres
-      type: object
-    PlaceInfo:
-      description: Place information for genre-based recommendation
-      properties:
-        place_id:
-          title: Place Id
-          type: integer
-        place_name:
-          title: Place Name
-          type: string
-        address:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Address
-        lat:
-          title: Lat
-          type: number
-        lng:
-          title: Lng
-          type: number
-      required:
-      - place_id
-      - place_name
-      - lat
-      - lng
-      title: PlaceInfo
-      type: object
-    TrackPlaceCard:
-      description: A single recommendation card — track + matched genre + recommended
-        place
-      properties:
-        track:
-          $ref: '#/components/schemas/TrackWithGenres'
-        matched_genre:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Matched Genre
-          description: The genre used to find the recommended place
-        place:
-          anyOf:
-          - $ref: '#/components/schemas/PlaceInfo'
-          - type: 'null'
-          description: Recommended place for this track's genre (null if no match)
-        recommendation_count:
-          title: Recommendation Count
-          type: integer
-          default: 0
-          description: Number of recommendations of that genre at the place
-      required:
-      - track
-      title: TrackPlaceCard
-      type: object
-    PlaceRecommendationResponse:
-      description: Response for genre-based place recommendation — one card per track
-      properties:
-        cards:
-          items:
-            $ref: '#/components/schemas/TrackPlaceCard'
-          title: Cards
-          type: array
-          description: One card per recently played track
-      required:
-      - cards
-      title: PlaceRecommendationResponse
       type: object
     RecommendationCreateRequest:
       description: Request model for creating a recommendation
@@ -534,6 +619,32 @@ components:
       - expires_in
       title: TokenResponse
       type: object
+    TrackPlaceCard:
+      description: 'A single recommendation card: track + matched genre + recommended
+        place'
+      properties:
+        matched_genre:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The genre used to find the recommended place
+          title: Matched Genre
+        place:
+          anyOf:
+          - $ref: '#/components/schemas/PlaceInfo'
+          - type: 'null'
+          description: Recommended place for this track's genre (null if no match)
+        recommendation_count:
+          default: 0
+          description: Number of recommendations of that genre at the place
+          title: Recommendation Count
+          type: integer
+        track:
+          $ref: '#/components/schemas/TrackWithGenres'
+      required:
+      - track
+      title: TrackPlaceCard
+      type: object
     TrackResponse:
       description: Track response model
       properties:
@@ -554,6 +665,13 @@ components:
           format: date-time
           title: Created At
           type: string
+        genres:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Genres
         id:
           title: Id
           type: integer
@@ -573,14 +691,6 @@ components:
           - type: string
           - type: 'null'
           title: Track Url
-        genres:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          title: Genres
-          description: List of genres associated with the track's artist(s)
       required:
       - spotify_track_id
       - title
@@ -588,6 +698,45 @@ components:
       - id
       - created_at
       title: TrackResponse
+      type: object
+    TrackWithGenres:
+      description: Recently played track with artist genres
+      properties:
+        album:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Album
+        album_cover_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Album Cover Url
+        artist:
+          title: Artist
+          type: string
+        genres:
+          items:
+            type: string
+          title: Genres
+          type: array
+        spotify_track_id:
+          title: Spotify Track Id
+          type: string
+        title:
+          title: Title
+          type: string
+        track_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Track Url
+      required:
+      - spotify_track_id
+      - title
+      - artist
+      - genres
+      title: TrackWithGenres
       type: object
     UserPublic:
       description: Public user information (for followers/following lists)
@@ -609,40 +758,12 @@ components:
           type: string
         status_message:
           default: ''
-          maxLength: 20
           title: Status Message
           type: string
       required:
       - id
       - spotify_id
       title: UserPublic
-      type: object
-    UserUpdateRequest:
-      description: Request model for updating user profile
-      properties:
-        display_name:
-          anyOf:
-          - maxLength: 255
-            type: string
-          - type: 'null'
-          description: Display name
-          title: Display Name
-        profile_image:
-          anyOf:
-          - maximum: 9
-            minimum: 1
-            type: integer
-          - type: 'null'
-          description: Profile image number (1-9)
-          title: Profile Image
-        status_message:
-          anyOf:
-          - maxLength: 20
-            type: string
-          - type: 'null'
-          description: Status message (max 20 chars)
-          title: Status Message
-      title: UserUpdateRequest
       type: object
     UserResponse:
       description: Response model for user information
@@ -673,7 +794,6 @@ components:
           type: string
         status_message:
           default: ''
-          maxLength: 20
           title: Status Message
           type: string
       required:
@@ -681,6 +801,33 @@ components:
       - spotify_id
       - created_at
       title: UserResponse
+      type: object
+    UserUpdateRequest:
+      description: Request model for updating user profile
+      properties:
+        display_name:
+          anyOf:
+          - maxLength: 255
+            type: string
+          - type: 'null'
+          description: Display name
+          title: Display Name
+        profile_image:
+          anyOf:
+          - maximum: 9.0
+            minimum: 1.0
+            type: integer
+          - type: 'null'
+          description: Profile image number (1-9)
+          title: Profile Image
+        status_message:
+          anyOf:
+          - maxLength: 20
+            type: string
+          - type: 'null'
+          description: Status message (max 20 chars)
+          title: Status Message
+      title: UserUpdateRequest
       type: object
     UserWithStats:
       description: User with follow statistics and recommendation feed
@@ -699,15 +846,6 @@ components:
           - type: string
           - type: 'null'
           title: Email
-        profile_image:
-          default: 1
-          title: Profile Image
-          type: integer
-        status_message:
-          default: ''
-          maxLength: 20
-          title: Status Message
-          type: string
         follower_count:
           title: Follower Count
           type: integer
@@ -725,6 +863,10 @@ components:
           default: false
           title: Is Following
           type: boolean
+        profile_image:
+          default: 1
+          title: Profile Image
+          type: integer
         recommendation_count:
           default: 0
           title: Recommendation Count
@@ -736,6 +878,10 @@ components:
           type: array
         spotify_id:
           title: Spotify Id
+          type: string
+        status_message:
+          default: ''
+          title: Status Message
           type: string
       required:
       - id
@@ -926,15 +1072,15 @@ paths:
       - Authentication
   /api/v1/map/nearby:
     get:
-      description: "Get all recommendations within 10km radius of (lat, lng)\n\n\
-        Recommendations are fetched based on (lat, lng) center.\ndistance_meters\
-        \ and is_active are calculated from (my_lat, my_lng).\n\n**Active**: Within\
-        \ 200m from user's actual position (is_active=True)\n**Inactive**: Beyond\
-        \ 200m from user's actual position (is_active=False)\n\nRequires authentication.\
-        \n\nArgs:\n    my_lat: User's actual latitude\n    my_lng: User's actual\
-        \ longitude\n    lat: Map center latitude\n    lng: Map center longitude\
-        \n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\
-        \n    All recommendations within 10km with active/inactive status"
+      description: "Get all recommendations within 10km radius of (lat, lng)\n\nRecommendations\
+        \ are fetched based on (lat, lng) center.\ndistance_meters and is_active are\
+        \ calculated from (my_lat, my_lng).\n\n**Active**: Within 200m from user's\
+        \ actual position (is_active=True)\n**Inactive**: Beyond 200m from user's\
+        \ actual position (is_active=False)\n\nRequires authentication.\n\nArgs:\n\
+        \    my_lat: User's actual latitude\n    my_lng: User's actual longitude\n\
+        \    lat: Map center latitude\n    lng: Map center longitude\n    current_user:\
+        \ Authenticated user\n    db: Database session\n    \nReturns:\n    All recommendations\
+        \ within 2km with active/inactive status"
       operationId: get_nearby_map_data_api_v1_map_nearby_get
       parameters:
       - description: User's actual latitude (for distance/active calculation)
@@ -1023,6 +1169,36 @@ paths:
       security:
       - HTTPBearer: []
       summary: Create Recommendation Endpoint
+      tags:
+      - Recommendations
+  /api/v1/recommendations/llm:
+    get:
+      description: 'LLM-based personalized recommendation (v2)
+
+
+        Analyses the current user''s recommendation history using an LLM to:
+
+        1. Extract taste keywords from past recommendations
+
+        2. Suggest 10 new tracks the user might like
+
+        3. Find places in our DB where those tracks have been recommended
+
+        4. Extract mood/atmosphere keywords from the messages at those places
+
+
+        Requires authentication. The user must have at least one recommendation.'
+      operationId: get_llm_recommendation_endpoint_api_v1_recommendations_llm_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LLMRecommendationResponse'
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: Get Llm Recommendation Endpoint
       tags:
       - Recommendations
   /api/v1/recommendations/{recommendation_id}:
@@ -1162,6 +1338,27 @@ paths:
       summary: Add Recommendation Reaction
       tags:
       - Recommendations
+  /api/v1/tracks/popular:
+    get:
+      description: 'Get the top 5 most recommended tracks.
+
+
+        Returns tracks ordered by how many times they have been recommended (excluding
+        soft-deleted recommendations).
+
+
+        No authentication required.'
+      operationId: get_popular_tracks_api_v1_tracks_popular_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PopularTracksResponse'
+          description: Successful Response
+      summary: Get Popular Tracks
+      tags:
+      - Tracks
   /api/v1/users/me:
     get:
       description: "Get current user's profile with statistics\n\nReturns:\n    Current\
@@ -1208,40 +1405,24 @@ paths:
       summary: Update My Profile
       tags:
       - Users & Follow
-  /api/v1/users/me/recently-played:
-    get:
-      description: "Get current user's 3 most recently played tracks from Spotify\n\
-        \nRequires the user to have a linked Spotify account with a valid access\
-        \ token.\nThe Spotify access token must have the `user-read-recently-played`\
-        \ scope.\n\nReturns:\n    List of 3 most recently played tracks with metadata\
-        \ and played_at timestamp"
-      operationId: get_my_recently_played_api_v1_users_me_recently_played_get
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecentlyPlayedResponse'
-          description: Successful Response
-        '401':
-          description: Spotify token expired or invalid
-        '404':
-          description: Spotify account not linked
-        '502':
-          description: Failed to fetch from Spotify API
-      security:
-      - HTTPBearer: []
-      summary: Get My Recently Played
-      tags:
-      - Users & Follow
   /api/v1/users/me/place-recommendations:
     get:
-      description: "Get genre-based place recommendations from user's recently played\
-        \ tracks.\n\nReturns one card per track (3 cards total). Each card contains\
-        \ the track info, the genre that was used for matching, and the single best-matching\
-        \ place in the DB. Cards are ordered the same as the recently-played list\
-        \ from Spotify.\n\nRequires the user to have a linked Spotify account with\
-        \ a valid access token that includes the `user-read-recently-played` scope."
+      description: 'Get genre-based place recommendations from user''s recently played
+        tracks.
+
+
+        Returns one card per track (3 cards total).  Each card contains the track
+
+        info, the genre that was used for matching, and the single best-matching
+
+        place in the DB.  Cards are ordered the same as the recently-played list
+
+        from Spotify.
+
+
+        Requires the user to have a linked Spotify account with a valid access
+
+        token that includes the `user-read-recently-played` scope.'
       operationId: get_place_recommendations_api_v1_users_me_place_recommendations_get
       responses:
         '200':
@@ -1250,15 +1431,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/PlaceRecommendationResponse'
           description: Successful Response
-        '401':
-          description: Spotify token expired or invalid
-        '404':
-          description: Spotify account not linked
-        '502':
-          description: Failed to fetch from Spotify API
       security:
       - HTTPBearer: []
       summary: Get Place Recommendations
+      tags:
+      - Users & Follow
+  /api/v1/users/me/recently-played:
+    get:
+      description: "Get current user's 3 most recently played tracks from Spotify\n\
+        \nRequires the user to have a linked Spotify account with a valid access token.\n\
+        The Spotify access token must have the `user-read-recently-played` scope.\n\
+        \nReturns:\n    List of 3 most recently played tracks with metadata and played_at\
+        \ timestamp"
+      operationId: get_my_recently_played_api_v1_users_me_recently_played_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecentlyPlayedResponse'
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: Get My Recently Played
       tags:
       - Users & Follow
   /api/v1/users/{user_id}:

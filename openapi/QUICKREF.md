@@ -22,6 +22,7 @@ python generate_openapi.py
 
 ### Recommendations (`/api/v1/recommendations`)
 - `POST /` - 새 추천 생성 🔒
+- `GET  /llm` - LLM 기반 개인화 추천 (v2) 🔒
 - `GET  /{recommendation_id}` - 추천 상세 조회 🔒
 - `PUT  /{recommendation_id}/reactions` - 이모지 반응 추가/변경 🔒
 - `DELETE /{recommendation_id}/reactions` - 이모지 반응 제거 🔒

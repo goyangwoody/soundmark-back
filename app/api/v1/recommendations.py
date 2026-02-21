@@ -17,7 +17,8 @@ from app.schemas.recommendation import (
     RecommendationDetailResponse,
     RecommendationReactionRequest,
     RecommendationReactionResponse,
-    RecommendationLikeResponse
+    RecommendationLikeResponse,
+    LLMRecommendationResponse,
 )
 from app.schemas.auth import UserResponse
 from app.schemas.track import TrackResponse
@@ -31,6 +32,7 @@ from app.services.recommendation import (
     get_like_count,
     check_user_liked
 )
+from app.services.recommendation_v2 import get_llm_recommendations
 from app.core.security import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -92,6 +94,37 @@ async def create_recommendation_endpoint(
         reactions=reactions,
         user_reaction=user_reaction
     )
+
+
+# ========================================
+# LLM-based Recommendation v2
+# ========================================
+
+@router.get("/llm", response_model=LLMRecommendationResponse)
+async def get_llm_recommendation_endpoint(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    LLM-based personalized recommendation (v2)
+
+    Analyses the current user's recommendation history using an LLM to:
+    1. Extract taste keywords from past recommendations
+    2. Suggest 10 new tracks the user might like
+    3. Find places in our DB where those tracks have been recommended
+    4. Extract mood/atmosphere keywords from the messages at those places
+
+    Requires authentication. The user must have at least one recommendation.
+    """
+    result = await get_llm_recommendations(db, current_user)
+
+    if not result["llm_recommended_tracks"]:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No recommendations found. Create some recommendations first.",
+        )
+
+    return result
 
 
 @router.get("/{recommendation_id}", response_model=RecommendationDetailResponse)

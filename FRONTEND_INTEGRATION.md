@@ -185,6 +185,11 @@ interface RecommendationService {
         @Body request: CreateRecommendationRequest
     ): RecommendationResponse
     
+    @GET("/api/v1/recommendations/llm")
+    suspend fun getLLMRecommendations(
+        @Header("Authorization") token: String
+    ): LLMRecommendationResponse
+    
     @GET("/api/v1/recommendations/{recommendation_id}")
     suspend fun getRecommendation(
         @Path("recommendation_id") recommendationId: Int,
@@ -471,6 +476,39 @@ data class PopularTrackItem(
 data class PopularTracksResponse(
     val tracks: List<PopularTrackItem>,
     val total: Int
+)
+
+// ========================================
+// LLM-based Recommendation (v2)
+// ========================================
+
+data class LLMRecommendedTrack(
+    val title: String,
+    val artist: String
+)
+
+data class MatchedRecommendation(
+    val recommendationId: Int,
+    val track: TrackResponse,
+    val message: String?,
+    val placeName: String?,
+    val address: String?,
+    val lat: Double,
+    val lng: Double,
+    val createdBy: UserResponse
+)
+
+data class LLMPlaceResult(
+    val llmTrack: LLMRecommendedTrack,
+    val matchedRecommendations: List<MatchedRecommendation>,
+    val placeKeywords: List<String>
+)
+
+data class LLMRecommendationResponse(
+    val userTasteKeywords: List<String>,
+    val llmRecommendedTracks: List<LLMRecommendedTrack>,
+    val results: List<LLMPlaceResult>,
+    val unmatchedTracks: List<LLMRecommendedTrack>
 )
 ```
 
@@ -798,6 +836,37 @@ fun showRecommendationDetails(
             _recommendationDetail.value = detail
         } catch (e: Exception) {
             Log.e("MapViewModel", "Error loading recommendation detail", e)
+        }
+    }
+}
+
+// LLM 기반 추천 로드
+fun loadLLMRecommendations() {
+    viewModelScope.launch {
+        try {
+            val response = ApiClient.recommendationService.getLLMRecommendations(
+                token = authToken
+            )
+            
+            // 사용자 취향 키워드
+            _tasteKeywords.value = response.userTasteKeywords
+            
+            // LLM이 추천한 전체 트랙 목록
+            _llmTracks.value = response.llmRecommendedTracks
+            
+            // DB에서 매칭된 결과 (장소 + 키워드 포함)
+            _llmResults.value = response.results
+            
+            // DB에 없는 추천곡
+            _unmatchedTracks.value = response.unmatchedTracks
+            
+        } catch (e: HttpException) {
+            if (e.code() == 404) {
+                // 추천 기록이 없는 경우
+                Log.w("RecommendationVM", "No recommendations yet")
+            }
+        } catch (e: Exception) {
+            Log.e("RecommendationVM", "Error loading LLM recommendations", e)
         }
     }
 }
