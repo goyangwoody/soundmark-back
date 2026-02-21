@@ -2,12 +2,11 @@
 
 **위치 기반 소셜 음악 추천 플랫폼 백엔드**
 
-사용자가 특정 장소(좌표)에 노래를 "묻어두고", 다른 사용자는 해당 장소 반경 200m 이내에 도착했을 때만 추천 음악의 상세 정보를 볼 수 있는 서비스입니다.
+사용자가 특정 장소(좌표)에 노래를 "묻어두고", 다른 사용자가 해당 장소의 추천 음악을 발견하고 공유할 수 있는 서비스입니다.
 
 ## 핵심 기능
 
 - **위치 기반 음악 추천**: 특정 좌표에 Spotify 트랙을 추천으로 등록
-- **거리 기반 접근 제어**: 200m 이내에서만 추천곡 상세 정보 확인 가능
 - **Spotify 연동**: Spotify OAuth 로그인 및 트랙 메타데이터 연동
 - **지도 API**: 가까운 핀(200m 이내)은 개별 표시, 먼 핀은 개수만 클러스터링
 - **소셜 기능**: 좋아요/언라이크 토글, 팔로우/팔로잉
@@ -175,7 +174,6 @@ JWT 토큰 갱신 (Refresh Token 사용)
     "lng": 126.9780,
     "spotify_track_id": "3n3Ppam7vgaVa1iaRUc9Lp",
     "message": "이 카페에서 들으면 좋아요!",
-    "note": "비오는 날 창가 자리에서...",
     "place": {
       "source": "google",
       "google_place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
@@ -190,7 +188,6 @@ JWT 토큰 갱신 (Refresh Token 사용)
     "id": 123,
     "lat": 37.5665,
     "lng": 126.9780,
-    "distance_meters": 0,
     "track": {
       "id": 45,
       "spotify_track_id": "3n3Ppam7vgaVa1iaRUc9Lp",
@@ -221,22 +218,19 @@ JWT 토큰 갱신 (Refresh Token 사용)
   5. 중복 체크 (로깅만, 차단 안 함)
 
 #### `GET /recommendations/{recommendation_id}`
-추천곡 상세 조회 (**200m 거리 제한**)
+추천곡 상세 조회
 - **인증 필요**: ✅
 - **파라미터**: 
-  - `lat` (query, 현재 위치 위도, required)
-  - `lng` (query, 현재 위치 경도, required)
+  - `recommendation_id` (path, 추천곡 ID, required)
 - **응답**: `RecommendationDetailResponse`
   ```json
   {
     "id": 123,
     "lat": 37.5665,
     "lng": 126.9780,
-    "distance_meters": 150.5,
     "track": { /* TrackResponse */ },
     "user": { /* UserResponse */ },
     "message": "이 카페에서 들으면 좋아요!",
-    "note": "비오는 날 창가 자리에서...",
     "place_name": "스타벅스 강남점",
     "address": "서울특별시 강남구 테헤란로 123",
     "created_at": "2026-02-20T10:30:00",
@@ -249,16 +243,6 @@ JWT 토큰 갱신 (Refresh Token 사용)
   }
   ```
 - **에러**:
-  - `403 OUT_OF_RANGE`: 200m 초과 시
-    ```json
-    {
-      "detail": {
-        "code": "OUT_OF_RANGE",
-        "message": "추천곡 상세는 반경 200m 이내에서만 볼 수 있습니다.",
-        "distance_meters": 350.2
-      }
-    }
-    ```
   - `404`: 추천곡 없음
 
 #### `PUT /recommendations/{recommendation_id}/reactions`
@@ -575,7 +559,6 @@ users ─┬─ oauth_accounts
 | `lng` | FLOAT | 경도 |
 | `geom` | GEOMETRY(POINT, 4326) | **PostGIS 포인트** (GIST 인덱스) |
 | `message` | VARCHAR(500) | 짧은 메시지 |
-| `note` | TEXT | 긴 노트 |
 | `created_at` | TIMESTAMP | 생성 시각 (인덱스) |
 | `updated_at` | TIMESTAMP | 업데이트 시각 |
 | `deleted_at` | TIMESTAMP | 소프트 삭제 시각 |
@@ -589,7 +572,7 @@ users ─┬─ oauth_accounts
 **PostGIS 기능**:
 - `geom`: `GEOMETRY(POINT, 4326)` with **GIST 인덱스**
 - 거리 계산: `ST_DWithin`, `ST_Distance` (geography cast)
-- 200m 제한: `ST_DWithin(geom::geography, user_point::geography, 200)`
+- 반경 필터: `ST_DWithin(geom::geography, user_point::geography, radius)`
 
 ---
 
@@ -661,7 +644,6 @@ users ─┬─ oauth_accounts
 | `get_or_create_track(db, spotify_track_id)` | 트랙 조회/생성 (캐싱) |
 | `get_or_create_place(db, lat, lng, place_input)` | 장소 조회/생성 |
 | `create_recommendation(...)` | 추천곡 생성 (트랙+장소+지오메트리) |
-| `check_distance_access(db, rec_id, lat, lng, max_distance)` | 200m 거리 검증 |
 | `add_or_update_reaction(db, rec_id, user_id, emoji)` | 이모지 반응 추가/변경 |
 | `remove_reaction(db, rec_id, user_id)` | 반응 제거 |
 | `get_reactions(db, rec_id)` | 반응 목록 조회 ({이모지: 개수}) |

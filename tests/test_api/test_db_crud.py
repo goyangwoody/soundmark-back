@@ -300,8 +300,7 @@ async def test_create_and_read_recommendation(db_session: AsyncSession):
         lat=lat,
         lng=lng,
         geom=ST_SetSRID(ST_MakePoint(lng, lat), 4326),
-        message="테스트 메시지",
-        note="긴 노트 내용입니다."
+        message="테스트 메시지"
     )
     db_session.add(rec)
     await db_session.commit()
@@ -317,7 +316,6 @@ async def test_create_and_read_recommendation(db_session: AsyncSession):
     assert fetched.lat == lat
     assert fetched.lng == lng
     assert fetched.message == "테스트 메시지"
-    assert fetched.note == "긴 노트 내용입니다."
     assert fetched.deleted_at is None
 
 

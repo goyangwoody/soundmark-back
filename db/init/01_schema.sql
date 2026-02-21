@@ -81,7 +81,6 @@ CREATE TABLE IF NOT EXISTS recommendations (
     lng FLOAT NOT NULL,
     geom GEOMETRY(POINT, 4326) NOT NULL,
     message VARCHAR(500),
-    note TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMP

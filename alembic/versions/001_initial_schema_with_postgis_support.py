@@ -110,7 +110,6 @@ def upgrade() -> None:
             name='geometry'
         ), nullable=False),
         sa.Column('message', sa.String(length=500), nullable=True),
-        sa.Column('note', sa.Text(), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.Column('updated_at', sa.DateTime(), nullable=False),
         sa.Column('deleted_at', sa.DateTime(), nullable=True),

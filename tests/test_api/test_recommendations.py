@@ -34,46 +34,19 @@ async def test_recommendation(
 
 
 @pytest.mark.asyncio
-async def test_get_recommendation_detail_within_range(
+async def test_get_recommendation_detail(
     authenticated_client: AsyncClient,
     test_recommendation
 ):
-    """Test getting recommendation detail when within 200m"""
-    # Use same coordinates as recommendation (0m distance)
+    """Test getting recommendation detail"""
     response = await authenticated_client.get(
-        f"/api/v1/recommendations/{test_recommendation.id}",
-        params={
-            "lat": test_recommendation.lat,
-            "lng": test_recommendation.lng
-        }
+        f"/api/v1/recommendations/{test_recommendation.id}"
     )
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == test_recommendation.id
     assert "track" in data
     assert "user" in data
-
-
-@pytest.mark.asyncio
-async def test_get_recommendation_detail_out_of_range(
-    authenticated_client: AsyncClient,
-    test_recommendation
-):
-    """Test getting recommendation detail when beyond 200m"""
-    # Use coordinates far from recommendation (should fail)
-    far_lat = test_recommendation.lat + 0.01  # ~1km away
-    far_lng = test_recommendation.lng + 0.01
-    
-    response = await authenticated_client.get(
-        f"/api/v1/recommendations/{test_recommendation.id}",
-        params={
-            "lat": far_lat,
-            "lng": far_lng
-        }
-    )
-    assert response.status_code == 403
-    data = response.json()
-    assert data["detail"]["code"] == "OUT_OF_RANGE"
 
 
 @pytest.mark.asyncio
@@ -105,7 +78,6 @@ async def test_toggle_like(
 async def test_get_recommendation_not_found(authenticated_client: AsyncClient):
     """Test getting non-existent recommendation"""
     response = await authenticated_client.get(
-        "/api/v1/recommendations/99999",
-        params={"lat": 37.5665, "lng": 126.9780}
+        "/api/v1/recommendations/99999"
     )
     assert response.status_code == 404

@@ -127,7 +127,6 @@ async def create_recommendation(
     lng: float,
     spotify_track_id: str,
     message: Optional[str],
-    note: Optional[str],
     place_input: Optional[PlaceInput]
 ) -> Optional[Recommendation]:
     """
@@ -140,7 +139,6 @@ async def create_recommendation(
         lng: Longitude
         spotify_track_id: Spotify track ID
         message: Short message
-        note: Longer note
         place_input: Optional place information
         
     Returns:
@@ -164,8 +162,7 @@ async def create_recommendation(
         lat=lat,
         lng=lng,
         geom=geom_expr,
-        message=message,
-        note=note
+        message=message
     )
     
     db.add(recommendation)

@@ -239,7 +239,7 @@
           "Recommendations"
         ],
         "summary": "Get Recommendation Detail",
-        "description": "Get recommendation detail\n\n**Distance restriction**: User must be within 200m of the recommendation\nto access full details.\n\nRequires authentication.\n\nArgs:\n    recommendation_id: Recommendation ID\n    lat: User's current latitude\n    lng: User's current longitude\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    Recommendation detail\n    \nRaises:\n    403: If user is outside 200m radius\n    404: If recommendation not found",
+        "description": "Get recommendation detail\n\nRequires authentication.\n\nArgs:\n    recommendation_id: Recommendation ID\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    Recommendation detail\n    \nRaises:\n    404: If recommendation not found",
         "operationId": "get_recommendation_detail_api_v1_recommendations__recommendation_id__get",
         "security": [
           {
@@ -255,32 +255,6 @@
               "type": "integer",
               "title": "Recommendation Id"
             }
-          },
-          {
-            "name": "lat",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "number",
-              "maximum": 90.0,
-              "minimum": -90.0,
-              "description": "Current user latitude",
-              "title": "Lat"
-            },
-            "description": "Current user latitude"
-          },
-          {
-            "name": "lng",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "number",
-              "maximum": 180.0,
-              "minimum": -180.0,
-              "description": "Current user longitude",
-              "title": "Lng"
-            },
-            "description": "Current user longitude"
           }
         ],
         "responses": {
@@ -1048,18 +1022,6 @@
             ],
             "title": "Message",
             "description": "Short message about the track"
-          },
-          "note": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Note",
-            "description": "Longer note about the track"
           }
         },
         "type": "object",
@@ -1137,17 +1099,6 @@
             ],
             "title": "User Reaction",
             "description": "Current user's reaction emoji"
-          },
-          "note": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Note"
           },
           "place_name": {
             "anyOf": [

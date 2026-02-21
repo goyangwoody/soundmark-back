@@ -3,7 +3,7 @@ Recommendation API routes
 """
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
@@ -23,7 +23,6 @@ from app.schemas.auth import UserResponse
 from app.schemas.track import TrackResponse
 from app.services.recommendation import (
     create_recommendation,
-    check_distance_access,
     add_or_update_reaction,
     remove_reaction,
     get_reactions,
@@ -65,7 +64,6 @@ async def create_recommendation_endpoint(
         lng=request.lng,
         spotify_track_id=request.spotify_track_id,
         message=request.message,
-        note=request.note,
         place_input=request.place
     )
     
@@ -99,23 +97,16 @@ async def create_recommendation_endpoint(
 @router.get("/{recommendation_id}", response_model=RecommendationDetailResponse)
 async def get_recommendation_detail(
     recommendation_id: int,
-    lat: float = Query(..., description="Current user latitude", ge=-90, le=90),
-    lng: float = Query(..., description="Current user longitude", ge=-180, le=180),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Get recommendation detail
     
-    **Distance restriction**: User must be within 200m of the recommendation
-    to access full details.
-    
     Requires authentication.
     
     Args:
         recommendation_id: Recommendation ID
-        lat: User's current latitude
-        lng: User's current longitude
         current_user: Authenticated user
         db: Database session
         
@@ -123,30 +114,8 @@ async def get_recommendation_detail(
         Recommendation detail
         
     Raises:
-        403: If user is outside 200m radius
         404: If recommendation not found
     """
-    # Check distance access
-    is_within_range, distance = await check_distance_access(
-        db, recommendation_id, lat, lng, max_distance_meters=200
-    )
-    
-    if distance is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Recommendation not found"
-        )
-    
-    if not is_within_range:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "OUT_OF_RANGE",
-                "message": "추천곡 상세는 반경 200m 이내에서만 볼 수 있습니다.",
-                "distance_meters": distance
-            }
-        )
-    
     # Get recommendation with relationships
     result = await db.execute(
         select(Recommendation)
@@ -178,11 +147,9 @@ async def get_recommendation_detail(
         id=recommendation.id,
         lat=recommendation.lat,
         lng=recommendation.lng,
-        distance_meters=distance,
         track=TrackResponse.model_validate(recommendation.track),
         user=UserResponse.model_validate(recommendation.user),
         message=recommendation.message,
-        note=recommendation.note,
         place_name=recommendation.place.place_name if recommendation.place else None,
         address=recommendation.place.address if recommendation.place else None,
         created_at=recommendation.created_at,

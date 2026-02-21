@@ -284,7 +284,6 @@ data class CreateRecommendationRequest(
     val lat: Double,
     val lng: Double,
     val message: String?,
-    val note: String?,
     val placeName: String?,
     val address: String?
 )
@@ -297,7 +296,6 @@ data class RecommendationResponse(
     val lat: Double,
     val lng: Double,
     val message: String?,
-    val note: String?,
     val likesCount: Int,
     val isLiked: Boolean,
     val createdAt: String
@@ -686,42 +684,23 @@ try {
 
 ## 📍 위치 기반 기능
 
-### 200m 반경 내 추천만 상세 보기
+### 추천곡 상세 보기
 ```kotlin
-fun checkDistanceAndShowDetails(
-    userLat: Double,
-    userLng: Double,
-    recommendationLat: Double,
-    recommendationLng: Double
+fun showRecommendationDetails(
+    recommendationId: Int
 ) {
-    val distance = calculateDistance(
-        userLat, userLng,
-        recommendationLat, recommendationLng
-    )
-    
-    if (distance <= 200.0) {
-        // 200m 이내 - 상세 정보 표시
-        showRecommendationDetails(recommendation)
-    } else {
-        // 200m 밖 - 핀만 표시
-        showPinOnly(recommendation)
+    // 추천곡 상세 정보 표시
+    viewModelScope.launch {
+        try {
+            val detail = ApiClient.recommendationService.getRecommendation(
+                recommendationId = recommendationId,
+                token = authToken
+            )
+            _recommendationDetail.value = detail
+        } catch (e: Exception) {
+            Log.e("MapViewModel", "Error loading recommendation detail", e)
+        }
     }
-}
-
-fun calculateDistance(
-    lat1: Double, lon1: Double,
-    lat2: Double, lon2: Double
-): Double {
-    val r = 6371000.0 // Earth radius in meters
-    val dLat = Math.toRadians(lat2 - lat1)
-    val dLon = Math.toRadians(lon2 - lon1)
-    
-    val a = sin(dLat / 2) * sin(dLat / 2) +
-            cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
-            sin(dLon / 2) * sin(dLon / 2)
-    
-    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    return r * c
 }
 ```
 

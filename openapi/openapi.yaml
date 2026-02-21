@@ -117,12 +117,6 @@ components:
           - type: 'null'
           description: Short message about the track
           title: Message
-        note:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Longer note about the track
-          title: Note
         place:
           anyOf:
           - $ref: '#/components/schemas/PlaceInput'
@@ -168,11 +162,6 @@ components:
           - type: string
           - type: 'null'
           title: Message
-        note:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Note
         place_name:
           anyOf:
           - type: string
@@ -792,13 +781,10 @@ paths:
       - Recommendations
   /api/v1/recommendations/{recommendation_id}:
     get:
-      description: "Get recommendation detail\n\n**Distance restriction**: User must\
-        \ be within 200m of the recommendation\nto access full details.\n\nRequires\
-        \ authentication.\n\nArgs:\n    recommendation_id: Recommendation ID\n   \
-        \ lat: User's current latitude\n    lng: User's current longitude\n    current_user:\
-        \ Authenticated user\n    db: Database session\n    \nReturns:\n    Recommendation\
-        \ detail\n    \nRaises:\n    403: If user is outside 200m radius\n    404:\
-        \ If recommendation not found"
+      description: "Get recommendation detail\n\nRequires authentication.\n\nArgs:\n\
+        \    recommendation_id: Recommendation ID\n    current_user: Authenticated\
+        \ user\n    db: Database session\n    \nReturns:\n    Recommendation detail\n\
+        \    \nRaises:\n    404: If recommendation not found"
       operationId: get_recommendation_detail_api_v1_recommendations__recommendation_id__get
       parameters:
       - in: path
@@ -807,26 +793,6 @@ paths:
         schema:
           title: Recommendation Id
           type: integer
-      - description: Current user latitude
-        in: query
-        name: lat
-        required: true
-        schema:
-          description: Current user latitude
-          maximum: 90.0
-          minimum: -90.0
-          title: Lat
-          type: number
-      - description: Current user longitude
-        in: query
-        name: lng
-        required: true
-        schema:
-          description: Current user longitude
-          maximum: 180.0
-          minimum: -180.0
-          title: Lng
-          type: number
       responses:
         '200':
           content:

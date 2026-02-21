@@ -2,7 +2,7 @@
 Recommendation model - stores location-based music recommendations
 """
 from datetime import datetime
-from sqlalchemy import String, DateTime, Float, Text, ForeignKey
+from sqlalchemy import String, DateTime, Float, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 from geoalchemy2 import Geometry
@@ -23,9 +23,8 @@ class Recommendation(Base):
     lng: Mapped[float] = mapped_column(Float, nullable=False)
     geom = mapped_column(Geometry(geometry_type='POINT', srid=4326), nullable=False, index=True)
     
-    # User's message/note about this recommendation
-    message: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)  # Short message
-    note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Longer note
+    # User's message about this recommendation
+    message: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at: Mapped[datetime] = mapped_column(

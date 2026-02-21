@@ -38,7 +38,6 @@ class RecommendationCreateRequest(BaseModel):
     place: Optional[PlaceInput] = None
     spotify_track_id: str = Field(..., description="Spotify track ID")
     message: Optional[str] = Field(None, max_length=500, description="Short message about the track")
-    note: Optional[str] = Field(None, description="Longer note about the track")
 
 
 class RecommendationSummary(BaseModel):
@@ -75,7 +74,6 @@ class RecommendationResponse(BaseModel):
 class RecommendationDetailResponse(RecommendationResponse):
     """Detailed recommendation response (used in detail view)"""
     user: UserResponse
-    note: Optional[str] = None
     place_name: Optional[str] = None
     address: Optional[str] = None
 
