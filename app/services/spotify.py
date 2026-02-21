@@ -188,7 +188,7 @@ class SpotifyService:
             return []
 
 
-    def get_recently_played(self, access_token: str, limit: int = 3) -> list[Dict[str, Any]]:
+    def get_recently_played(self, access_token: str, limit: int = 3) -> Optional[list[Dict[str, Any]]]:
         """
         Get user's recently played tracks from Spotify
         
@@ -197,10 +197,10 @@ class SpotifyService:
             limit: Maximum number of recently played tracks to return (default: 3)
             
         Returns:
-            List of recently played track dicts with track metadata and played_at
+            List of recently played track dicts, or None on error
         """
         try:
-            sp = spotipy.Spotify(auth=access_token)
+            sp = spotipy.Spotify(auth=access_token, requests_timeout=15)
             results = sp.current_user_recently_played(limit=limit)
             items = results.get("items", [])
             
@@ -218,10 +218,10 @@ class SpotifyService:
                 for item in items
             ]
         except Exception as e:
-            logger.error(f"Failed to get recently played tracks: {str(e)}")
-            return []
+            logger.error(f"Failed to get recently played tracks: {str(e)}", exc_info=True)
+            return None
 
-    def get_recently_played_with_genres(self, access_token: str, limit: int = 3) -> list[Dict[str, Any]]:
+    def get_recently_played_with_genres(self, access_token: str, limit: int = 3) -> Optional[list[Dict[str, Any]]]:
         """
         Get user's recently played tracks with artist genres from Spotify
         
@@ -230,10 +230,11 @@ class SpotifyService:
             limit: Maximum number of recently played tracks to return (default: 3)
             
         Returns:
-            List of track dicts with spotify_track_id, title, artist, genres
+            List of track dicts with spotify_track_id, title, artist, genres.
+            Returns None on error (e.g. expired token, network issue).
         """
         try:
-            sp = spotipy.Spotify(auth=access_token)
+            sp = spotipy.Spotify(auth=access_token, requests_timeout=15)
             results = sp.current_user_recently_played(limit=limit)
             items = results.get("items", [])
             
@@ -248,6 +249,11 @@ class SpotifyService:
                     "spotify_track_id": track["id"],
                     "title": track["name"],
                     "artist": ", ".join([a["name"] for a in track["artists"]]),
+                    "album": track["album"]["name"] if track.get("album") else None,
+                    "album_cover_url": (track["album"]["images"][0]["url"]
+                                        if track.get("album", {}).get("images")
+                                        else None),
+                    "track_url": track.get("external_urls", {}).get("spotify"),
                     "_artist_ids": artist_ids,
                 })
             
@@ -271,8 +277,8 @@ class SpotifyService:
             
             return tracks_data
         except Exception as e:
-            logger.error(f"Failed to get recently played with genres: {str(e)}")
-            return []
+            logger.error(f"Failed to get recently played with genres: {str(e)}", exc_info=True)
+            return None
 
     def get_artist_genres_batch(self, artist_ids: list[str]) -> Dict[str, list[str]]:
         """

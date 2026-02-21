@@ -3,7 +3,7 @@ Users and Follow API routes
 """
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Header, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
@@ -31,7 +31,6 @@ from app.schemas.recommendation import (
     PlaceInfo,
 )
 from app.schemas.track import RecentlyPlayedResponse, RecentlyPlayedTrack
-from app.models.oauth import OAuthAccount
 from app.services.spotify import spotify_service
 from app.core.security import get_current_user, get_current_user_optional
 
@@ -148,79 +147,39 @@ async def update_my_profile(
 @router.get("/me/recently-played", response_model=RecentlyPlayedResponse)
 async def get_my_recently_played(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    x_spotify_token: str = Header(..., description="Spotify access token (issued by the client via PKCE)"),
 ):
     """
     Get current user's 3 most recently played tracks from Spotify
-    
-    Requires the user to have a linked Spotify account with a valid access token.
-    The Spotify access token must have the `user-read-recently-played` scope.
-    
+
+    The client must supply a valid Spotify access token in the
+    `X-Spotify-Token` header.  The token must have the
+    `user-read-recently-played` scope.
+
     Returns:
         List of 3 most recently played tracks with metadata and played_at timestamp
     """
-    # Get user's Spotify OAuth account
-    oauth_result = await db.execute(
-        select(OAuthAccount).where(
-            OAuthAccount.user_id == current_user.id,
-            OAuthAccount.provider == "spotify"
-        )
-    )
-    oauth_account = oauth_result.scalar_one_or_none()
-    
-    if not oauth_account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Spotify account not linked"
-        )
-    
-    # Check if token is expired and refresh if needed
-    from datetime import datetime, timedelta
-    if oauth_account.expires_at and oauth_account.expires_at < datetime.utcnow():
-        if not oauth_account.refresh_token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Spotify token expired and no refresh token available"
-            )
-        
-        token_info = spotify_service.refresh_access_token(oauth_account.refresh_token)
-        if not token_info:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Failed to refresh Spotify token"
-            )
-        
-        oauth_account.access_token = token_info["access_token"]
-        if token_info.get("refresh_token"):
-            oauth_account.refresh_token = token_info["refresh_token"]
-        oauth_account.expires_at = datetime.utcnow() + timedelta(
-            seconds=token_info.get("expires_in", 3600)
-        )
-        oauth_account.updated_at = datetime.utcnow()
-        await db.commit()
-    
-    # Fetch recently played tracks from Spotify
-    tracks = spotify_service.get_recently_played(oauth_account.access_token, limit=3)
-    
+    tracks = spotify_service.get_recently_played(x_spotify_token, limit=3)
+
     if tracks is None:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Failed to fetch recently played tracks from Spotify"
+            detail="Failed to fetch recently played tracks from Spotify. "
+                   "The Spotify access token may be expired or invalid.",
         )
-    
+
     return RecentlyPlayedResponse(
-        tracks=[
-            RecentlyPlayedTrack(**track)
-            for track in tracks
-        ],
-        total=len(tracks)
+        tracks=[RecentlyPlayedTrack(**track) for track in tracks],
+        total=len(tracks),
     )
 
 
 @router.get("/me/place-recommendations", response_model=PlaceRecommendationResponse)
 async def get_place_recommendations(
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    x_spotify_token: str = Header(..., description="Spotify access token (issued by the client via PKCE)"),
 ):
     """
     Get genre-based place recommendations from user's recently played tracks.
@@ -230,59 +189,24 @@ async def get_place_recommendations(
     place in the DB.  Cards are ordered the same as the recently-played list
     from Spotify.
 
-    Requires the user to have a linked Spotify account with a valid access
-    token that includes the `user-read-recently-played` scope.
+    The client must supply a valid Spotify access token in the
+    `X-Spotify-Token` header.  The token must have the
+    `user-read-recently-played` scope.
     """
-    # Get user's Spotify OAuth account
-    oauth_result = await db.execute(
-        select(OAuthAccount).where(
-            OAuthAccount.user_id == current_user.id,
-            OAuthAccount.provider == "spotify"
-        )
-    )
-    oauth_account = oauth_result.scalar_one_or_none()
-
-    if not oauth_account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Spotify account not linked"
-        )
-
-    # Check if token is expired and refresh if needed
-    from datetime import datetime, timedelta
-    if oauth_account.expires_at and oauth_account.expires_at < datetime.utcnow():
-        if not oauth_account.refresh_token:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Spotify token expired and no refresh token available"
-            )
-
-        token_info = spotify_service.refresh_access_token(oauth_account.refresh_token)
-        if not token_info:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Failed to refresh Spotify token"
-            )
-
-        oauth_account.access_token = token_info["access_token"]
-        if token_info.get("refresh_token"):
-            oauth_account.refresh_token = token_info["refresh_token"]
-        oauth_account.expires_at = datetime.utcnow() + timedelta(
-            seconds=token_info.get("expires_in", 3600)
-        )
-        oauth_account.updated_at = datetime.utcnow()
-        await db.commit()
-
     # Step 1: Get recently played tracks with genres from Spotify
     tracks_with_genres = spotify_service.get_recently_played_with_genres(
-        oauth_account.access_token, limit=3
+        x_spotify_token, limit=3
     )
 
-    if not tracks_with_genres:
+    if tracks_with_genres is None:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Failed to fetch recently played tracks from Spotify"
+            detail="Failed to fetch recently played tracks from Spotify. "
+                   "The Spotify access token may be expired or invalid.",
         )
+
+    if not tracks_with_genres:
+        return PlaceRecommendationResponse(cards=[])
 
     # Step 2: Load all recommendation rows that have a place and stored genres
     recs_query = (
