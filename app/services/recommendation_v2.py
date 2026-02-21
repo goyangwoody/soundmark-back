@@ -143,9 +143,7 @@ async def get_llm_recommendations(
     if not user_recs_json:
         return {
             "user_taste_keywords": [],
-            "llm_recommended_tracks": [],
-            "results": [],
-            "unmatched_tracks": [],
+            "places": [],
         }
 
     # ── Step 2: Ask LLM for taste analysis + 10 recommended tracks ──
@@ -156,103 +154,64 @@ async def get_llm_recommendations(
     if not llm_tracks:
         return {
             "user_taste_keywords": taste_keywords,
-            "llm_recommended_tracks": [],
-            "results": [],
-            "unmatched_tracks": [],
+            "places": [],
         }
 
     # ── Step 3: Search our DB for the recommended tracks ──
     matched_tracks = await _find_tracks_in_db(db, llm_tracks)
 
-    # Separate matched vs unmatched
-    matched_results = []
-    unmatched_tracks = []
-
-    for lt in llm_tracks:
-        key = f"{lt['title'].lower()}|||{lt['artist'].lower()}"
-        if key in matched_tracks:
-            matched_results.append({
-                "llm_track": lt,
-                "db_track": matched_tracks[key],
-            })
-        else:
-            unmatched_tracks.append(lt)
+    if not matched_tracks:
+        return {
+            "user_taste_keywords": taste_keywords,
+            "places": [],
+        }
 
     # ── Step 4: Find recommendations/places for matched tracks ──
-    track_ids = [m["db_track"].id for m in matched_results]
+    track_ids = [t.id for t in matched_tracks.values()]
     all_recs = await _find_recommendations_for_tracks(db, track_ids)
 
-    # Group recommendations by track_id
-    recs_by_track: dict[int, list[Recommendation]] = {}
+    # ── Step 5: Group by place (deduplicate by lat/lng) & collect messages ──
+    # place_key -> { place info + messages + matched track ids }
+    places_map: dict[str, dict] = {}
+    total_matched_track_count = len(matched_tracks)
+
     for rec in all_recs:
-        recs_by_track.setdefault(rec.track_id, []).append(rec)
-
-    # ── Step 5: For each matched track, build recommendation list & collect messages ──
-    # track_key -> list of matched_recommendation dicts
-    built_results: dict[str, dict] = {}
-    # track_key -> list of messages (for batch keyword extraction)
-    messages_by_track: dict[str, list[str]] = {}
-
-    for m in matched_results:
-        db_track: Track = m["db_track"]
-        track_key = f"{db_track.title}|||{db_track.artist}"
-        track_recs = recs_by_track.get(db_track.id, [])
-
-        matched_recommendations = []
-        messages: list[str] = []
-
-        for rec in track_recs:
-            matched_recommendations.append({
-                "recommendation_id": rec.id,
-                "track": {
-                    "id": db_track.id,
-                    "spotify_track_id": db_track.spotify_track_id,
-                    "title": db_track.title,
-                    "artist": db_track.artist,
-                    "album": db_track.album,
-                    "album_cover_url": db_track.album_cover_url,
-                    "track_url": db_track.track_url,
-                    "preview_url": db_track.preview_url,
-                    "genres": db_track.genres,
-                    "created_at": rec.track.created_at.isoformat(),
-                },
-                "message": rec.message,
+        place_key = f"{rec.lat:.6f},{rec.lng:.6f}"
+        if place_key not in places_map:
+            places_map[place_key] = {
                 "place_name": rec.place.place_name if rec.place else None,
                 "address": rec.place.address if rec.place else None,
                 "lat": rec.lat,
                 "lng": rec.lng,
-                "created_by": {
-                    "id": rec.user.id,
-                    "spotify_id": rec.user.spotify_id,
-                    "display_name": rec.user.display_name,
-                    "profile_image_url": rec.user.profile_image_url,
-                    "status_message": getattr(rec.user, "status_message", None),
-                },
-            })
-            if rec.message:
-                messages.append(rec.message)
+                "messages": [],
+                "matched_track_ids": set(),
+            }
+        if rec.message:
+            places_map[place_key]["messages"].append(rec.message)
+        places_map[place_key]["matched_track_ids"].add(rec.track_id)
 
-        built_results[track_key] = {
-            "llm_track": m["llm_track"],
-            "matched_recommendations": matched_recommendations,
-        }
-        messages_by_track[track_key] = messages
+    # ── Step 6: Batch keyword extraction — single LLM call for all places ──
+    messages_by_place = {k: v["messages"] for k, v in places_map.items()}
+    keywords_by_place = await llm_service.extract_keywords_batch(messages_by_place)
 
-    # ── Step 6: Batch keyword extraction — single LLM call for all tracks ──
-    keywords_by_track = await llm_service.extract_keywords_batch(messages_by_track)
-
-    # Assemble final results list
-    results = []
-    for track_key, data in built_results.items():
-        results.append({
-            "llm_track": data["llm_track"],
-            "matched_recommendations": data["matched_recommendations"],
-            "place_keywords": keywords_by_track.get(track_key, []),
+    # Assemble final places list
+    places = []
+    for place_key, info in places_map.items():
+        # likelihood = matched tracks at this place / total matched tracks
+        likelihood = len(info["matched_track_ids"]) / total_matched_track_count if total_matched_track_count > 0 else 0
+        places.append({
+            "place_name": info["place_name"],
+            "address": info["address"],
+            "lat": info["lat"],
+            "lng": info["lng"],
+            "keywords": keywords_by_place.get(place_key, []),
+            "likelihood": round(likelihood, 2),
         })
+
+    # Sort by likelihood descending
+    places.sort(key=lambda p: p["likelihood"], reverse=True)
 
     return {
         "user_taste_keywords": taste_keywords,
-        "llm_recommended_tracks": llm_tracks,
-        "results": results,
-        "unmatched_tracks": unmatched_tracks,
+        "places": places,
     }

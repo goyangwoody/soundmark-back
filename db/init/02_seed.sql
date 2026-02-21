@@ -813,3 +813,461 @@ INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
 SELECT r.id, u.id, '🚶', NOW()-INTERVAL '17 days' FROM recommendations r CROSS JOIN users u WHERE r.message='갤러리아포레 산책길에 Levitating 기분 좋음' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
 INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
 SELECT r.id, u.id, '❤️', NOW()-INTERVAL '16 days' FROM recommendations r CROSS JOIN users u WHERE r.message='갤러리아포레 산책길에 Levitating 기분 좋음' AND u.spotify_id='spotify_user_minsu' ON CONFLICT DO NOTHING;
+
+
+-- ================================================================
+-- ================================================================
+--   EXPANSION BLOCK: Additional Genre Data + 40 New Tracks
+--   + 80 New Recommendations + Likes
+-- ================================================================
+-- ================================================================
+
+-- ========================================
+-- 8. Update existing tracks with genres
+-- ========================================
+UPDATE tracks SET genres = ARRAY['K-Pop'] WHERE spotify_track_id IN (
+    '72IwoG8tqvIWV10IHjpNNA', '1mWdTewIgB3gtBM3TOSFhB', '5c58c6sKc2JK3o75ZBSeL1',
+    '4RewTiGEGoO7FWNZUmp1f4', '6bvZRLLkBKkmgpBJTTj3QK', '0a4MMyCrzT0En247IhqZbD',
+    '0Q5VnK2DYzRyfqQRJuUtvi', '4fsQ0K37TOXa3hEQfjEic1', '68r87x3VZdAMhv8nBVuynz',
+    '0ObcVIFoDdBBClvABfJvdz', '3AOf6YEpxQ894FmrwI9k96', '3r8RuvgbX9s7ammBn07D3W',
+    '69WpV0U7OMNFGyq8I63dcC'
+);
+UPDATE tracks SET genres = ARRAY['K-Pop', 'K-Ballad'] WHERE spotify_track_id IN ('3P3UA61WRQqwCXaoFOTENd', '0pYacDCZuRhcrwGUA5nTBe');
+UPDATE tracks SET genres = ARRAY['K-Indie', 'K-Rock'] WHERE spotify_track_id = '4TBHfv2isYco3fNKjQ8oSI';
+UPDATE tracks SET genres = ARRAY['K-R&B', 'K-Hip-Hop'] WHERE spotify_track_id IN ('2IgbYlOlFpiSFYnsqB39lM', '4g6XOg9rvB55GCTJcYchOG');
+UPDATE tracks SET genres = ARRAY['Pop', 'R&B'] WHERE spotify_track_id = '0VjIjW4GlUZAMYd2vXMi3b';
+UPDATE tracks SET genres = ARRAY['Pop'] WHERE spotify_track_id IN (
+    '7qiZfU4dY1lWllzX7mPBI3', '7qEHsqek33rTcFNT9PFqLf', '39LLxExYz6ewLAcYrzQQyP',
+    '4Dvkj6JhhA12EX05fT7y2e', '5wANPM4fQCJwkGd4rN57mH', '0V3wPSX9ygBnCm8psDIegu',
+    '3USxtqRwSYz57Ewm6wWRMp', '6EJiVf7U0p1BBfs0qqeb1f'
+);
+UPDATE tracks SET genres = ARRAY['Rock', 'Indie'] WHERE spotify_track_id = '003vvx7Niy0yvhvHt4a68B';
+UPDATE tracks SET genres = ARRAY['Pop', 'Synthpop'] WHERE spotify_track_id = '7o9uu2GDtVDr9nsR7ZRN73';
+UPDATE tracks SET genres = ARRAY['Pop', 'Soul'] WHERE spotify_track_id = '6VObnIkLVruX4UVyxWhlqm';
+UPDATE tracks SET genres = ARRAY['Hip-Hop', 'Trap'] WHERE spotify_track_id = '2xLMifQCjDGFmkHkpNLD9h';
+UPDATE tracks SET genres = ARRAY['Hip-Hop', 'Rap'] WHERE spotify_track_id = '7MJQ9Nfxzh8LPZ9e9u68Fq';
+UPDATE tracks SET genres = ARRAY['Pop', 'R&B'] WHERE spotify_track_id = '4iJyoBOLtHqaGxP12qzhQI';
+UPDATE tracks SET genres = ARRAY['Jazz', 'Vocal Jazz'] WHERE spotify_track_id = '7FXj7Qg3YorUxdrzvrcY25';
+UPDATE tracks SET genres = ARRAY['Jazz', 'Cool Jazz'] WHERE spotify_track_id = '1YQWosTIljIvxAgHWTp7KP';
+UPDATE tracks SET genres = ARRAY['Classical', 'Piano'] WHERE spotify_track_id = '2agBDIr9MYDUducQPC1sFU';
+UPDATE tracks SET genres = ARRAY['Classical', 'Baroque'] WHERE spotify_track_id = '1c3GkbZBnyrQ1cm4TGHFrK';
+UPDATE tracks SET genres = ARRAY['Rock', 'Classic Rock'] WHERE spotify_track_id IN ('3z8h0TU7ReDPLIbEnYhWZb', '40riOy7x9W7GXjyGp4pjAv');
+UPDATE tracks SET genres = ARRAY['Rock', 'Britpop'] WHERE spotify_track_id = '41tTCXOzxSWAoVrfeIIh8x';
+UPDATE tracks SET genres = ARRAY['Rock', 'Alternative'] WHERE spotify_track_id = '70LcF31zb1H0PyJoS1Sx1r';
+
+-- ========================================
+-- 9. Additional Tracks (40 new tracks with real Spotify data)
+-- ========================================
+INSERT INTO tracks (spotify_track_id, title, artist, album, album_cover_url, track_url, preview_url, genres, created_at, updated_at) VALUES
+-- ─── K-Pop (8) ───
+('2zrhoHlFKxFTRF5XEAoulP', 'Next Level', 'aespa', 'Next Level', 'https://i.scdn.co/image/ab67616d0000b273c3040848e6ef0e132c5c8340', 'https://open.spotify.com/track/2zrhoHlFKxFTRF5XEAoulP', NULL, '{K-Pop}', NOW(), NOW()),
+('7FbrGaHYVDmfr7KoLIZnQ7', 'Cupid (Twin Ver.)', 'FIFTY FIFTY', 'The Beginning: Cupid', 'https://i.scdn.co/image/ab67616d0000b2737e1eeb0d5986e4107adc78c9', 'https://open.spotify.com/track/7FbrGaHYVDmfr7KoLIZnQ7', NULL, '{K-Pop}', NOW(), NOW()),
+('6kL4AqU2qdEIXuFCQ10tqM', 'The Feels', 'TWICE', 'Formula of Love: O+T=<3', 'https://i.scdn.co/image/ab67616d0000b2739f456d7e24fe0e4bb7b30879', 'https://open.spotify.com/track/6kL4AqU2qdEIXuFCQ10tqM', NULL, '{K-Pop}', NOW(), NOW()),
+('0It6VJoMAare1sdHhQWAN8', 'Love Shot', 'EXO', 'LOVE SHOT - The 5th Album Repackage', 'https://i.scdn.co/image/ab67616d0000b2731214a535b3b984094a8d2d71', 'https://open.spotify.com/track/0It6VJoMAare1sdHhQWAN8', NULL, '{K-Pop}', NOW(), NOW()),
+('0lIzj9bwmhiCSOZQMhb3LH', 'Psycho', 'Red Velvet', 'The ReVe Festival Finale', 'https://i.scdn.co/image/ab67616d0000b273e5a366df8e520e30a7a95c4d', 'https://open.spotify.com/track/0lIzj9bwmhiCSOZQMhb3LH', NULL, '{K-Pop,"K-R&B"}', NOW(), NOW()),
+('6FBNMJFjexyBfFaEaMNRRs', 'Sugar Rush Ride', 'TOMORROW X TOGETHER', 'The Name Chapter: TEMPTATION', 'https://i.scdn.co/image/ab67616d0000b27356eda7c0e36c2cee95e86667', 'https://open.spotify.com/track/6FBNMJFjexyBfFaEaMNRRs', NULL, '{K-Pop}', NOW(), NOW()),
+('5M70hy7bM7gMTKhb6mXOOe', 'Guerrilla', 'ATEEZ', 'THE WORLD EP.1 : MOVEMENT', 'https://i.scdn.co/image/ab67616d0000b273ab5c9cd2e495d0060ea430aa', 'https://open.spotify.com/track/5M70hy7bM7gMTKhb6mXOOe', NULL, '{K-Pop}', NOW(), NOW()),
+('3Ua0m0YmEjrMi9XErKcNiR', 'TOMBOY', '(G)I-DLE', 'I NEVER DIE', 'https://i.scdn.co/image/ab67616d0000b2738a07e645c3105b5fca0b3ec4', 'https://open.spotify.com/track/3Ua0m0YmEjrMi9XErKcNiR', NULL, '{K-Pop}', NOW(), NOW()),
+-- ─── K-R&B / K-Hip-Hop / K-Indie (8) ───
+('6n8Wk7vaBmQtGGCgirrgY8', 'Phonecert (폰서트)', '10cm', 'The 3rd EP', 'https://i.scdn.co/image/ab67616d0000b2735c8d09bf43e2e6509bc03e08', 'https://open.spotify.com/track/6n8Wk7vaBmQtGGCgirrgY8', NULL, '{K-Indie,K-Pop}', NOW(), NOW()),
+('4dGJf5P2DYPq8Zxgz1XnVp', 'Beautiful', 'Crush', 'Guardian (Goblin) OST', 'https://i.scdn.co/image/ab67616d0000b2733aed4e5b01efbf891810a828', 'https://open.spotify.com/track/4dGJf5P2DYPq8Zxgz1XnVp', NULL, '{"K-R&B",OST}', NOW(), NOW()),
+('5r8BNlPXr8VjAXVEb3Rm6n', 'instagram', 'DEAN', '130 mood : TRBL', 'https://i.scdn.co/image/ab67616d0000b27399e3089abc4c0fc95a627732', 'https://open.spotify.com/track/5r8BNlPXr8VjAXVEb3Rm6n', NULL, '{"K-R&B"}', NOW(), NOW()),
+('4SLaUXPNB1EVddOQAmhnKO', 'You, Clouds, Rain (비도 오고 그래서)', 'Heize', '/// (너 먹구름 비)', 'https://i.scdn.co/image/ab67616d0000b273c8bfab9e5be9a8fba3798530', 'https://open.spotify.com/track/4SLaUXPNB1EVddOQAmhnKO', NULL, '{"K-R&B",K-Pop}', NOW(), NOW()),
+('4PQLAV3O3RMsmNZ3iAYB9D', '200%', 'AKMU', 'PLAY', 'https://i.scdn.co/image/ab67616d0000b27360e7daefb0d02c34ee20e921', 'https://open.spotify.com/track/4PQLAV3O3RMsmNZ3iAYB9D', NULL, '{K-Pop,K-Indie}', NOW(), NOW()),
+('2lVk3lmUsBYYxChYnQ5lA7', 'Travel (여행)', '볼빨간사춘기 (BOL4)', 'Two Five', 'https://i.scdn.co/image/ab67616d0000b273e20e357a9b56e1b5b4c3d4c2', 'https://open.spotify.com/track/2lVk3lmUsBYYxChYnQ5lA7', NULL, '{K-Indie,K-Pop}', NOW(), NOW()),
+('6HMLFrHl77GoxCXJWq3MFz', 'MOMMAE (몸매) (feat. Ugly Duck)', 'Jay Park', 'Worldwide', 'https://i.scdn.co/image/ab67616d0000b273d12c1e5bbf57b8e91741f786', 'https://open.spotify.com/track/6HMLFrHl77GoxCXJWq3MFz', NULL, '{"K-Hip-Hop","K-R&B"}', NOW(), NOW()),
+('7Fy53RtgsGW0wQKlGgPSIZ', 'Yanghwa BRDG (양화대교)', 'Zion.T', 'OO', 'https://i.scdn.co/image/ab67616d0000b273d53c5c389de4c74e8b7e4fb8', 'https://open.spotify.com/track/7Fy53RtgsGW0wQKlGgPSIZ', NULL, '{"K-R&B",K-Hip-Hop}', NOW(), NOW()),
+-- ─── Western Pop (8) ───
+('2Fxmhks0bxGSBdJ92vM42m', 'bad guy', 'Billie Eilish', 'WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?', 'https://i.scdn.co/image/ab67616d0000b27350a3147b4edd7701a876c6ce', 'https://open.spotify.com/track/2Fxmhks0bxGSBdJ92vM42m', NULL, '{Pop,Electropop}', NOW(), NOW()),
+('0pqnGHJpmpxLKifKRmU0WP', 'Believer', 'Imagine Dragons', 'Evolve', 'https://i.scdn.co/image/ab67616d0000b2735675e83f707f1d7271e5cf8a', 'https://open.spotify.com/track/0pqnGHJpmpxLKifKRmU0WP', NULL, '{Rock,Pop}', NOW(), NOW()),
+('3AJwUDP919kvQ9QcozQPxg', 'Yellow', 'Coldplay', 'Parachutes', 'https://i.scdn.co/image/ab67616d0000b2739164bafe9adc0a3990584832', 'https://open.spotify.com/track/3AJwUDP919kvQ9QcozQPxg', NULL, '{Rock,Alternative}', NOW(), NOW()),
+('6b8Be6ljOzmkOmFslEb23P', '24K Magic', 'Bruno Mars', '24K Magic', 'https://i.scdn.co/image/ab67616d0000b273232711f7d2fabb4ec8b6e036', 'https://open.spotify.com/track/6b8Be6ljOzmkOmFslEb23P', NULL, '{Pop,Funk}', NOW(), NOW()),
+('0SiywuOBRcynK0uKGWdCnn', 'Bad Romance', 'Lady Gaga', 'The Fame Monster (Deluxe)', 'https://i.scdn.co/image/ab67616d0000b273424e7db45cb60eb9fa1bcdfc', 'https://open.spotify.com/track/0SiywuOBRcynK0uKGWdCnn', NULL, '{Pop,Dance}', NOW(), NOW()),
+('6ocbgoVGwYJhOv1GgI9NsC', '7 rings', 'Ariana Grande', 'thank u, next', 'https://i.scdn.co/image/ab67616d0000b2736c3be3b0e67b4f803cdb6dbc', 'https://open.spotify.com/track/6ocbgoVGwYJhOv1GgI9NsC', NULL, '{Pop,Trap}', NOW(), NOW()),
+('21jGcNKet2qwijlDFuPiPb', 'Circles', 'Post Malone', 'Hollywood''s Bleeding', 'https://i.scdn.co/image/ab67616d0000b2739478c87599550dd73bfa7e02', 'https://open.spotify.com/track/21jGcNKet2qwijlDFuPiPb', NULL, '{Pop,Rock}', NOW(), NOW()),
+('3PfIrDoz19wz7qK7tYeu7w', 'Don''t Start Now', 'Dua Lipa', 'Future Nostalgia', 'https://i.scdn.co/image/ab67616d0000b273c88bae7846e62a8ba59ee0bd', 'https://open.spotify.com/track/3PfIrDoz19wz7qK7tYeu7w', NULL, '{Pop,Disco}', NOW(), NOW()),
+-- ─── Hip-Hop / Rap (4) ───
+('7KXjTSCq5nL1LoYtL7XAwS', 'HUMBLE.', 'Kendrick Lamar', 'DAMN.', 'https://i.scdn.co/image/ab67616d0000b2738b52c6b9bc4e43d873869699', 'https://open.spotify.com/track/7KXjTSCq5nL1LoYtL7XAwS', NULL, '{"Hip-Hop",Rap}', NOW(), NOW()),
+('0kL3TYRsSXnu0iJvFO3rit', 'Hotline Bling', 'Drake', 'Views', 'https://i.scdn.co/image/ab67616d0000b273f16ab998b8f59f6e1e18eb27', 'https://open.spotify.com/track/0kL3TYRsSXnu0iJvFO3rit', NULL, '{"Hip-Hop",Pop}', NOW(), NOW()),
+('4fzsfWzRhPawzqhX8Qt9F3', 'Stronger', 'Kanye West', 'Graduation', 'https://i.scdn.co/image/ab67616d0000b273cd1f1118aa5de7c07a3ad8cc', 'https://open.spotify.com/track/4fzsfWzRhPawzqhX8Qt9F3', NULL, '{"Hip-Hop",Electronic}', NOW(), NOW()),
+('7lQ8MOhq6IN2w8EYcFNSUk', 'Without Me', 'Eminem', 'The Eminem Show', 'https://i.scdn.co/image/ab67616d0000b2736ca5c90113b30c3c43ffb8f4', 'https://open.spotify.com/track/7lQ8MOhq6IN2w8EYcFNSUk', NULL, '{"Hip-Hop",Rap}', NOW(), NOW()),
+-- ─── Electronic / Dance (4) ───
+('0nrRP2bk19rLc0NV8nRBOE', 'Wake Me Up', 'Avicii', 'True', 'https://i.scdn.co/image/ab67616d0000b2e37e4e98f6c1c2c06bb8a2de06', 'https://open.spotify.com/track/0nrRP2bk19rLc0NV8nRBOE', NULL, '{EDM,Dance}', NOW(), NOW()),
+('2Foc5Q5nqNiosCNqttzHof', 'Get Lucky (feat. Pharrell Williams & Nile Rodgers)', 'Daft Punk', 'Random Access Memories', 'https://i.scdn.co/image/ab67616d0000b2739b9b36b0e22870b9f542d937', 'https://open.spotify.com/track/2Foc5Q5nqNiosCNqttzHof', NULL, '{Disco,Electronic}', NOW(), NOW()),
+('7BKLCZ1jbUBVqRi2FVlTVw', 'Closer', 'The Chainsmokers, Halsey', 'Closer', 'https://i.scdn.co/image/ab67616d0000b2739aa289e10d011baf078d964b', 'https://open.spotify.com/track/7BKLCZ1jbUBVqRi2FVlTVw', NULL, '{EDM,Pop}', NOW(), NOW()),
+('2dpaYNEQHiRxtZbfNsse99', 'Happier', 'Marshmello, Bastille', 'Happier', 'https://i.scdn.co/image/ab67616d0000b2730e7e25c0f9a66e9316429bd5', 'https://open.spotify.com/track/2dpaYNEQHiRxtZbfNsse99', NULL, '{EDM,Pop}', NOW(), NOW()),
+-- ─── Rock / Alternative (4) ───
+('5ghIJDpPoe3CfHMGu71E6T', 'Smells Like Teen Spirit', 'Nirvana', 'Nevermind', 'https://i.scdn.co/image/ab67616d0000b2739e4e1b6eb0aa2ec6e4a4ad24', 'https://open.spotify.com/track/5ghIJDpPoe3CfHMGu71E6T', NULL, '{Rock,Grunge}', NOW(), NOW()),
+('60a0Rd6pjrkxjPbaKzXjfq', 'In The End', 'Linkin Park', 'Hybrid Theory', 'https://i.scdn.co/image/ab67616d0000b273e2f039481babe23658fc719a', 'https://open.spotify.com/track/60a0Rd6pjrkxjPbaKzXjfq', NULL, '{Rock,"Nu Metal"}', NOW(), NOW()),
+('6lgczhmJUHKJbFiB2iFerF', 'Basket Case', 'Green Day', 'Dookie', 'https://i.scdn.co/image/ab67616d0000b273b2b2747c89d2157b5131e5b6', 'https://open.spotify.com/track/6lgczhmJUHKJbFiB2iFerF', NULL, '{Punk,Rock}', NOW(), NOW()),
+('5FVd6KXrgO9B3JPmGrhqHb', 'Do I Wanna Know?', 'Arctic Monkeys', 'AM', 'https://i.scdn.co/image/ab67616d0000b2734ae1c4c5c45aabe565499163', 'https://open.spotify.com/track/5FVd6KXrgO9B3JPmGrhqHb', NULL, '{Rock,Indie}', NOW(), NOW()),
+-- ─── R&B / Soul (4) ───
+('7DfFc7a3mEsPTaLBCfNJRK', 'Thinkin Bout You', 'Frank Ocean', 'channel ORANGE', 'https://i.scdn.co/image/ab67616d0000b273c66cc282eab3565ac79cfecb', 'https://open.spotify.com/track/7DfFc7a3mEsPTaLBCfNJRK', NULL, '{"R&B",Soul}', NOW(), NOW()),
+('1Qrg8KqiBpW07V7PNxwwwL', 'Kill Bill', 'SZA', 'SOS', 'https://i.scdn.co/image/ab67616d0000b27370dbc9f47669d120ad874ec1', 'https://open.spotify.com/track/1Qrg8KqiBpW07V7PNxwwwL', NULL, '{"R&B",Pop}', NOW(), NOW()),
+('5QO79kh1waicV47BqGRL3g', 'Save Your Tears', 'The Weeknd', 'After Hours', 'https://i.scdn.co/image/ab67616d0000b2738863bc11d2aa12b54f5aeb36', 'https://open.spotify.com/track/5QO79kh1waicV47BqGRL3g', NULL, '{"R&B",Synthpop}', NOW(), NOW()),
+('1blficLzeYlqZ9dGROOhCy', 'Best Part (feat. H.E.R.)', 'Daniel Caesar', 'Freudian', 'https://i.scdn.co/image/ab67616d0000b273bc3e6b9b8b6803b3a2ab1e79', 'https://open.spotify.com/track/1blficLzeYlqZ9dGROOhCy', NULL, '{"R&B",Neo-Soul}', NOW(), NOW()),
+-- ─── J-Pop / Latin (4) ───
+('1ypMnktCB2eTkiPBOk2vCv', 'Idol (アイドル)', 'YOASOBI', 'Idol', 'https://i.scdn.co/image/ab67616d0000b273583c60a10af3d3e48c330860', 'https://open.spotify.com/track/1ypMnktCB2eTkiPBOk2vCv', NULL, '{J-Pop,Anime}', NOW(), NOW()),
+('53RF5JR4dVaJapJbweexyH', 'Shinunoga E-Wa', 'Fujii Kaze', 'HELP EVER HURT NEVER', 'https://i.scdn.co/image/ab67616d0000b273e394f2782bcc0e8c1affc437', 'https://open.spotify.com/track/53RF5JR4dVaJapJbweexyH', NULL, '{J-Pop}', NOW(), NOW()),
+('1IHWl5LamUGEuP4ozKQSXZ', 'Titi Me Preguntó', 'Bad Bunny', 'Un Verano Sin Ti', 'https://i.scdn.co/image/ab67616d0000b273497edb0f09eccd49ac8e60fb', 'https://open.spotify.com/track/1IHWl5LamUGEuP4ozKQSXZ', NULL, '{Reggaeton,Latin}', NOW(), NOW()),
+('6habFhsceSTjwMFa8CqA8A', 'Despacito', 'Luis Fonsi, Daddy Yankee', 'VIDA', 'https://i.scdn.co/image/ab67616d0000b2736b5e65f1eaf4ecfe5ab0e7a0', 'https://open.spotify.com/track/6habFhsceSTjwMFa8CqA8A', NULL, '{Latin,Reggaeton}', NOW(), NOW())
+ON CONFLICT (spotify_track_id) DO NOTHING;
+
+
+-- ========================================
+-- 10. Additional Recommendations (서울 전역 - 신규 트랙 활용 80+)
+-- ========================================
+INSERT INTO recommendations (user_id, track_id, place_id, message, lat, lng, geom, created_at, updated_at) VALUES
+-- ─── 종로구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_minsu'), (SELECT id FROM tracks WHERE spotify_track_id='2zrhoHlFKxFTRF5XEAoulP'), (SELECT id FROM places WHERE place_name='경복궁'), 'aespa Next Level 들으면 경복궁도 광야 느낌', 37.579617, 126.977041, ST_SetSRID(ST_MakePoint(126.977041, 37.579617), 4326), NOW()-INTERVAL '9 days', NOW()-INTERVAL '9 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_jieun'), (SELECT id FROM tracks WHERE spotify_track_id='4dGJf5P2DYPq8Zxgz1XnVp'), (SELECT id FROM places WHERE place_name='북촌한옥마을'), '한옥마을에서 크러쉬 Beautiful 들으니 도깨비 느낌', 37.582604, 126.983880, ST_SetSRID(ST_MakePoint(126.983880, 37.582604), 4326), NOW()-INTERVAL '7 days', NOW()-INTERVAL '7 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_junho'), (SELECT id FROM tracks WHERE spotify_track_id='7Fy53RtgsGW0wQKlGgPSIZ'), (SELECT id FROM places WHERE place_name='광화문광장'), '광화문에서 양화대교 들으면 서울 감성 제대로', 37.572280, 126.976890, ST_SetSRID(ST_MakePoint(126.976890, 37.572280), 4326), NOW()-INTERVAL '6 days', NOW()-INTERVAL '6 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_seoyeon'), (SELECT id FROM tracks WHERE spotify_track_id='53RF5JR4dVaJapJbweexyH'), (SELECT id FROM places WHERE place_name='인사동 쌈지길'), '인사동에서 Fujii Kaze 들으니 아시아 감성 믹스', 37.573924, 126.985019, ST_SetSRID(ST_MakePoint(126.985019, 37.573924), 4326), NOW()-INTERVAL '5 days', NOW()-INTERVAL '5 days'),
+
+-- ─── 중구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_woojin'), (SELECT id FROM tracks WHERE spotify_track_id='7FbrGaHYVDmfr7KoLIZnQ7'), (SELECT id FROM places WHERE place_name='명동거리'), '명동에서 FIFTY FIFTY Cupid 들으면 사랑에 빠질듯', 37.563576, 126.985820, ST_SetSRID(ST_MakePoint(126.985820, 37.563576), 4326), NOW()-INTERVAL '8 days', NOW()-INTERVAL '8 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_hyejin'), (SELECT id FROM tracks WHERE spotify_track_id='0SiywuOBRcynK0uKGWdCnn'), (SELECT id FROM places WHERE place_name='DDP 동대문디자인플라자'), 'DDP 미래적 건물에 Lady Gaga Bad Romance 찰떡', 37.567030, 127.009520, ST_SetSRID(ST_MakePoint(127.009520, 37.567030), 4326), NOW()-INTERVAL '7 days', NOW()-INTERVAL '7 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_donghyun'), (SELECT id FROM tracks WHERE spotify_track_id='5r8BNlPXr8VjAXVEb3Rm6n'), (SELECT id FROM places WHERE place_name='을지로3가 힙지로'), '힙지로 노포에서 DEAN instagram 감성 제대로', 37.566010, 126.991350, ST_SetSRID(ST_MakePoint(126.991350, 37.566010), 4326), NOW()-INTERVAL '4 days', NOW()-INTERVAL '4 days'),
+
+-- ─── 용산구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_sohee'), (SELECT id FROM tracks WHERE spotify_track_id='5QO79kh1waicV47BqGRL3g'), (SELECT id FROM places WHERE place_name='N서울타워'), '남산타워에서 Save Your Tears 들으며 야경 감상', 37.551169, 126.988227, ST_SetSRID(ST_MakePoint(126.988227, 37.551169), 4326), NOW()-INTERVAL '6 days', NOW()-INTERVAL '6 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_taehyung'), (SELECT id FROM tracks WHERE spotify_track_id='6HMLFrHl77GoxCXJWq3MFz'), (SELECT id FROM places WHERE place_name='이태원 거리'), '이태원 클럽 분위기에 Jay Park MOMMAE 찰떡', 37.534540, 126.994360, ST_SetSRID(ST_MakePoint(126.994360, 37.534540), 4326), NOW()-INTERVAL '5 days', NOW()-INTERVAL '5 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_yuna'), (SELECT id FROM tracks WHERE spotify_track_id='1blficLzeYlqZ9dGROOhCy'), (SELECT id FROM places WHERE place_name='한남동 카페거리'), '한남동 분위기에 Daniel Caesar Best Part 감성', 37.534600, 127.000450, ST_SetSRID(ST_MakePoint(127.000450, 37.534600), 4326), NOW()-INTERVAL '4 days', NOW()-INTERVAL '4 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_jiho'), (SELECT id FROM tracks WHERE spotify_track_id='2Foc5Q5nqNiosCNqttzHof'), (SELECT id FROM places WHERE place_name='경리단길'), '경리단길 밤산책에 Daft Punk Get Lucky 기분 좋음', 37.537300, 126.987450, ST_SetSRID(ST_MakePoint(126.987450, 37.537300), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+
+-- ─── 성동구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_eunji'), (SELECT id FROM tracks WHERE spotify_track_id='3Ua0m0YmEjrMi9XErKcNiR'), (SELECT id FROM places WHERE place_name='성수동 카페거리'), '성수 카페에서 (G)I-DLE TOMBOY 들으면 자신감 뿜뿜', 37.544200, 127.055800, ST_SetSRID(ST_MakePoint(127.055800, 37.544200), 4326), NOW()-INTERVAL '6 days', NOW()-INTERVAL '6 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_minjae'), (SELECT id FROM tracks WHERE spotify_track_id='7DfFc7a3mEsPTaLBCfNJRK'), (SELECT id FROM places WHERE place_name='서울숲'), '서울숲 벤치에서 Frank Ocean Thinkin Bout You 감성', 37.544540, 127.037700, ST_SetSRID(ST_MakePoint(127.037700, 37.544540), 4326), NOW()-INTERVAL '5 days', NOW()-INTERVAL '5 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_nayeon'), (SELECT id FROM tracks WHERE spotify_track_id='4SLaUXPNB1EVddOQAmhnKO'), (SELECT id FROM places WHERE place_name='뚝섬역 벽화골목'), '비 오는 날 벽화골목에서 Heize 비도 오고 그래서', 37.547300, 127.047100, ST_SetSRID(ST_MakePoint(127.047100, 37.547300), 4326), NOW()-INTERVAL '4 days', NOW()-INTERVAL '4 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_siwoo'), (SELECT id FROM tracks WHERE spotify_track_id='0lIzj9bwmhiCSOZQMhb3LH'), (SELECT id FROM places WHERE place_name='성수 대림창고'), '대림창고 전시에 Red Velvet Psycho 분위기', 37.544100, 127.057200, ST_SetSRID(ST_MakePoint(127.057200, 37.544100), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_hayoung'), (SELECT id FROM tracks WHERE spotify_track_id='3PfIrDoz19wz7qK7tYeu7w'), (SELECT id FROM places WHERE place_name='어니언 성수점'), '어니언에서 Dua Lipa Don''t Start Now 기분 전환', 37.545200, 127.056800, ST_SetSRID(ST_MakePoint(127.056800, 37.545200), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_doyoon'), (SELECT id FROM tracks WHERE spotify_track_id='6FBNMJFjexyBfFaEaMNRRs'), (SELECT id FROM places WHERE place_name='성수연방'), '성수연방에서 TXT Sugar Rush Ride 달달하게', 37.543900, 127.054700, ST_SetSRID(ST_MakePoint(127.054700, 37.543900), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+
+-- ─── 광진구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_chaewon'), (SELECT id FROM tracks WHERE spotify_track_id='0It6VJoMAare1sdHhQWAN8'), (SELECT id FROM places WHERE place_name='건대입구 커먼그라운드'), '커먼그라운드에서 EXO Love Shot 들으면 텐션', 37.542470, 127.068100, ST_SetSRID(ST_MakePoint(127.068100, 37.542470), 4326), NOW()-INTERVAL '5 days', NOW()-INTERVAL '5 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_hyunwoo'), (SELECT id FROM tracks WHERE spotify_track_id='0nrRP2bk19rLc0NV8nRBOE'), (SELECT id FROM places WHERE place_name='뚝섬유원지'), '한강에서 Avicii Wake Me Up 들으면 자유 느낌', 37.531600, 127.066800, ST_SetSRID(ST_MakePoint(127.066800, 37.531600), 4326), NOW()-INTERVAL '4 days', NOW()-INTERVAL '4 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_minji'), (SELECT id FROM tracks WHERE spotify_track_id='6kL4AqU2qdEIXuFCQ10tqM'), (SELECT id FROM places WHERE place_name='어린이대공원'), '어린이대공원에서 TWICE The Feels 봄나들이', 37.548300, 127.080200, ST_SetSRID(ST_MakePoint(127.080200, 37.548300), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+
+-- ─── 동대문구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_woojin'), (SELECT id FROM tracks WHERE spotify_track_id='60a0Rd6pjrkxjPbaKzXjfq'), (SELECT id FROM places WHERE place_name='경희대학교'), '경희대 시험기간 린킨파크 In The End 공감 MAX', 37.597010, 127.051480, ST_SetSRID(ST_MakePoint(127.051480, 37.597010), 4326), NOW()-INTERVAL '6 days', NOW()-INTERVAL '6 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_minsu'), (SELECT id FROM tracks WHERE spotify_track_id='4PQLAV3O3RMsmNZ3iAYB9D'), (SELECT id FROM places WHERE place_name='회기역 먹자골목'), '회기 떡볶이 + AKMU 200% = 행복 200%', 37.589500, 127.057200, ST_SetSRID(ST_MakePoint(127.057200, 37.589500), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+
+-- ─── 성북구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_jieun'), (SELECT id FROM tracks WHERE spotify_track_id='3AJwUDP919kvQ9QcozQPxg'), (SELECT id FROM places WHERE place_name='고려대학교'), '고대 가을 캠퍼스에서 Coldplay Yellow 낭만', 37.589610, 127.032400, ST_SetSRID(ST_MakePoint(127.032400, 37.589610), 4326), NOW()-INTERVAL '5 days', NOW()-INTERVAL '5 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_hyejin'), (SELECT id FROM tracks WHERE spotify_track_id='2lVk3lmUsBYYxChYnQ5lA7'), (SELECT id FROM places WHERE place_name='길상사'), '길상사에서 볼빨간사춘기 여행 들으며 힐링', 37.600970, 127.006900, ST_SetSRID(ST_MakePoint(127.006900, 37.600970), 4326), NOW()-INTERVAL '4 days', NOW()-INTERVAL '4 days'),
+
+-- ─── 강북구/도봉구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_donghyun'), (SELECT id FROM tracks WHERE spotify_track_id='0pqnGHJpmpxLKifKRmU0WP'), (SELECT id FROM places WHERE place_name='북한산 우이령길'), '북한산 정상 가면서 Imagine Dragons Believer 파이팅', 37.641580, 127.011900, ST_SetSRID(ST_MakePoint(127.011900, 37.641580), 4326), NOW()-INTERVAL '5 days', NOW()-INTERVAL '5 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_sohee'), (SELECT id FROM tracks WHERE spotify_track_id='5ghIJDpPoe3CfHMGu71E6T'), (SELECT id FROM places WHERE place_name='도봉산역 등산로입구'), '등산길에 Nirvana Smells Like Teen Spirit 에너지', 37.689480, 127.044250, ST_SetSRID(ST_MakePoint(127.044250, 37.689480), 4326), NOW()-INTERVAL '4 days', NOW()-INTERVAL '4 days'),
+
+-- ─── 노원구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_taehyung'), (SELECT id FROM tracks WHERE spotify_track_id='7BKLCZ1jbUBVqRi2FVlTVw'), (SELECT id FROM places WHERE place_name='서울과학기술대학교'), '과기대 야경에 The Chainsmokers Closer 분위기', 37.632040, 127.077750, ST_SetSRID(ST_MakePoint(127.077750, 37.632040), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+
+-- ─── 은평구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_yuna'), (SELECT id FROM tracks WHERE spotify_track_id='6n8Wk7vaBmQtGGCgirrgY8'), (SELECT id FROM places WHERE place_name='은평한옥마을'), '한옥마을에서 10cm 폰서트 들으면 고즈넉 감성', 37.636400, 126.918300, ST_SetSRID(ST_MakePoint(126.918300, 37.636400), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+
+-- ─── 서대문구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_jiho'), (SELECT id FROM tracks WHERE spotify_track_id='4fzsfWzRhPawzqhX8Qt9F3'), (SELECT id FROM places WHERE place_name='연세대학교'), '연대 공대 밤샘 코딩에 Kanye West Stronger', 37.566536, 126.939370, ST_SetSRID(ST_MakePoint(126.939370, 37.566536), 4326), NOW()-INTERVAL '5 days', NOW()-INTERVAL '5 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_eunji'), (SELECT id FROM tracks WHERE spotify_track_id='1ypMnktCB2eTkiPBOk2vCv'), (SELECT id FROM places WHERE place_name='연남동 연트럴파크'), '연트럴파크에서 YOASOBI Idol 들으면 애니 주인공', 37.566100, 126.925800, ST_SetSRID(ST_MakePoint(126.925800, 37.566100), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_minjae'), (SELECT id FROM tracks WHERE spotify_track_id='6ocbgoVGwYJhOv1GgI9NsC'), (SELECT id FROM places WHERE place_name='신촌 거리'), '신촌에서 Ariana Grande 7 rings 쇼핑 기분', 37.559700, 126.942200, ST_SetSRID(ST_MakePoint(126.942200, 37.559700), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+
+-- ─── 마포구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_nayeon'), (SELECT id FROM tracks WHERE spotify_track_id='2Fxmhks0bxGSBdJ92vM42m'), (SELECT id FROM places WHERE place_name='홍익대학교'), '홍대 버스킹 보면서 Billie Eilish bad guy 분위기', 37.550970, 126.925620, ST_SetSRID(ST_MakePoint(126.925620, 37.550970), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_siwoo'), (SELECT id FROM tracks WHERE spotify_track_id='7KXjTSCq5nL1LoYtL7XAwS'), (SELECT id FROM places WHERE place_name='합정역 카페거리'), '합정 카페에서 Kendrick Lamar HUMBLE 작업용', 37.549460, 126.913580, ST_SetSRID(ST_MakePoint(126.913580, 37.549460), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_hayoung'), (SELECT id FROM tracks WHERE spotify_track_id='5FVd6KXrgO9B3JPmGrhqHb'), (SELECT id FROM places WHERE place_name='상수역 책방골목'), '독립서점에서 Arctic Monkeys 감성 독서', 37.547650, 126.922600, ST_SetSRID(ST_MakePoint(126.922600, 37.547650), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_doyoon'), (SELECT id FROM tracks WHERE spotify_track_id='6habFhsceSTjwMFa8CqA8A'), (SELECT id FROM places WHERE place_name='망원한강공원'), '한강 피크닉에 Despacito 여름 바이브', 37.551930, 126.895230, ST_SetSRID(ST_MakePoint(126.895230, 37.551930), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_chaewon'), (SELECT id FROM tracks WHERE spotify_track_id='1ypMnktCB2eTkiPBOk2vCv'), (SELECT id FROM places WHERE place_name='연남동 골목길'), '연남동에서 YOASOBI 아이돌 들으면서 카페 투어', 37.562400, 126.925500, ST_SetSRID(ST_MakePoint(126.925500, 37.562400), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_hyunwoo'), (SELECT id FROM tracks WHERE spotify_track_id='2Foc5Q5nqNiosCNqttzHof'), (SELECT id FROM places WHERE place_name='경의선숲길'), '경의선숲길에서 Daft Punk Get Lucky 기분UP', 37.544900, 126.913200, ST_SetSRID(ST_MakePoint(126.913200, 37.544900), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+
+-- ─── 영등포구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_minsu'), (SELECT id FROM tracks WHERE spotify_track_id='6b8Be6ljOzmkOmFslEb23P'), (SELECT id FROM places WHERE place_name='한강공원 여의도'), '여의도 한강에서 Bruno Mars 24K Magic 파티', 37.529030, 126.932570, ST_SetSRID(ST_MakePoint(126.932570, 37.529030), 4326), NOW()-INTERVAL '4 days', NOW()-INTERVAL '4 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_jieun'), (SELECT id FROM tracks WHERE spotify_track_id='2dpaYNEQHiRxtZbfNsse99'), (SELECT id FROM places WHERE place_name='여의도공원'), '여의도공원 산책에 Marshmello Happier 기분전환', 37.525800, 126.922400, ST_SetSRID(ST_MakePoint(126.922400, 37.525800), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_junho'), (SELECT id FROM tracks WHERE spotify_track_id='21jGcNKet2qwijlDFuPiPb'), (SELECT id FROM places WHERE place_name='선유도공원'), '선유도 일몰에 Post Malone Circles 루프', 37.541700, 126.899700, ST_SetSRID(ST_MakePoint(126.899700, 37.541700), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+
+-- ─── 동작구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_seoyeon'), (SELECT id FROM tracks WHERE spotify_track_id='0kL3TYRsSXnu0iJvFO3rit'), (SELECT id FROM places WHERE place_name='노량진 수산시장'), '노량진 시장 활기에 Drake Hotline Bling 바이브', 37.513600, 126.940800, ST_SetSRID(ST_MakePoint(126.940800, 37.513600), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_woojin'), (SELECT id FROM tracks WHERE spotify_track_id='1Qrg8KqiBpW07V7PNxwwwL'), (SELECT id FROM places WHERE place_name='흑석동 중앙대학교'), '중앙대에서 SZA Kill Bill 들으면 영화 주인공', 37.505300, 126.957600, ST_SetSRID(ST_MakePoint(126.957600, 37.505300), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+
+-- ─── 관악구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_hyejin'), (SELECT id FROM tracks WHERE spotify_track_id='7lQ8MOhq6IN2w8EYcFNSUk'), (SELECT id FROM places WHERE place_name='서울대학교'), '서울대 도서관에서 Eminem Without Me 각성제', 37.460800, 126.951900, ST_SetSRID(ST_MakePoint(126.951900, 37.460800), 4326), NOW()-INTERVAL '4 days', NOW()-INTERVAL '4 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_donghyun'), (SELECT id FROM tracks WHERE spotify_track_id='6lgczhmJUHKJbFiB2iFerF'), (SELECT id FROM places WHERE place_name='관악산 등산로'), '관악산에서 Green Day Basket Case 에너지 폭발', 37.446700, 126.964100, ST_SetSRID(ST_MakePoint(126.964100, 37.446700), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+
+-- ─── 서초구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_sohee'), (SELECT id FROM tracks WHERE spotify_track_id='7FbrGaHYVDmfr7KoLIZnQ7'), (SELECT id FROM places WHERE place_name='강남역 사거리'), '강남역에서 FIFTY FIFTY Cupid 달달하게', 37.497942, 127.027621, ST_SetSRID(ST_MakePoint(127.027621, 37.497942), 4326), NOW()-INTERVAL '5 days', NOW()-INTERVAL '5 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_taehyung'), (SELECT id FROM tracks WHERE spotify_track_id='5M70hy7bM7gMTKhb6mXOOe'), (SELECT id FROM places WHERE place_name='반포한강공원'), '반포 분수쇼에 ATEEZ Guerrilla 퍼포먼스 느낌', 37.510490, 127.008600, ST_SetSRID(ST_MakePoint(127.008600, 37.510490), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_yuna'), (SELECT id FROM tracks WHERE spotify_track_id='1IHWl5LamUGEuP4ozKQSXZ'), (SELECT id FROM places WHERE place_name='반포 세빛섬'), '세빛섬에서 Bad Bunny 들으니 라틴 파티 느낌', 37.512400, 127.001800, ST_SetSRID(ST_MakePoint(127.001800, 37.512400), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_jiho'), (SELECT id FROM tracks WHERE spotify_track_id='4dGJf5P2DYPq8Zxgz1XnVp'), (SELECT id FROM places WHERE place_name='예술의전당'), '예술의전당에서 Crush Beautiful 들으면 감동 두배', 37.478300, 127.011600, ST_SetSRID(ST_MakePoint(127.011600, 37.478300), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+
+-- ─── 강남구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_eunji'), (SELECT id FROM tracks WHERE spotify_track_id='6kL4AqU2qdEIXuFCQ10tqM'), (SELECT id FROM places WHERE place_name='코엑스몰'), '코엑스에서 TWICE The Feels 들으면 행복 가득', 37.512010, 127.058670, ST_SetSRID(ST_MakePoint(127.058670, 37.512010), 4326), NOW()-INTERVAL '4 days', NOW()-INTERVAL '4 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_minjae'), (SELECT id FROM tracks WHERE spotify_track_id='5QO79kh1waicV47BqGRL3g'), (SELECT id FROM places WHERE place_name='테라로사 강남점'), '테라로사에서 The Weeknd Save Your Tears 감성', 37.508333, 127.061667, ST_SetSRID(ST_MakePoint(127.061667, 37.508333), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_nayeon'), (SELECT id FROM tracks WHERE spotify_track_id='3PfIrDoz19wz7qK7tYeu7w'), (SELECT id FROM places WHERE place_name='압구정 로데오거리'), '압구정에서 Dua Lipa Don''t Start Now 쇼핑BGM', 37.527700, 127.040900, ST_SetSRID(ST_MakePoint(127.040900, 37.527700), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_siwoo'), (SELECT id FROM tracks WHERE spotify_track_id='6b8Be6ljOzmkOmFslEb23P'), (SELECT id FROM places WHERE place_name='가로수길'), '가로수길에서 Bruno Mars 24K Magic 워킹', 37.519200, 127.023500, ST_SetSRID(ST_MakePoint(127.023500, 37.519200), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_hayoung'), (SELECT id FROM tracks WHERE spotify_track_id='2zrhoHlFKxFTRF5XEAoulP'), (SELECT id FROM places WHERE place_name='도산공원'), '도산공원에서 aespa Next Level 산책 모드', 37.523200, 127.035600, ST_SetSRID(ST_MakePoint(127.035600, 37.523200), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_doyoon'), (SELECT id FROM tracks WHERE spotify_track_id='0SiywuOBRcynK0uKGWdCnn'), (SELECT id FROM places WHERE place_name='봉은사'), '봉은사 야경에 Lady Gaga Bad Romance 묘한 매력', 37.515200, 127.057800, ST_SetSRID(ST_MakePoint(127.057800, 37.515200), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+
+-- ─── 송파구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_chaewon'), (SELECT id FROM tracks WHERE spotify_track_id='2zrhoHlFKxFTRF5XEAoulP'), (SELECT id FROM places WHERE place_name='석촌호수'), '석촌호수 걸으면서 aespa Next Level 기분전환', 37.510760, 127.099430, ST_SetSRID(ST_MakePoint(127.099430, 37.510760), 4326), NOW()-INTERVAL '4 days', NOW()-INTERVAL '4 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_hyunwoo'), (SELECT id FROM tracks WHERE spotify_track_id='0pqnGHJpmpxLKifKRmU0WP'), (SELECT id FROM places WHERE place_name='롯데월드타워'), '123층에서 Imagine Dragons Believer 외치면', 37.512460, 127.102470, ST_SetSRID(ST_MakePoint(127.102470, 37.512460), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_minsu'), (SELECT id FROM tracks WHERE spotify_track_id='5M70hy7bM7gMTKhb6mXOOe'), (SELECT id FROM places WHERE place_name='올림픽공원'), '올림픽공원에서 ATEEZ Guerrilla 콘서트 느낌', 37.520800, 127.121700, ST_SetSRID(ST_MakePoint(127.121700, 37.520800), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_jieun'), (SELECT id FROM tracks WHERE spotify_track_id='0nrRP2bk19rLc0NV8nRBOE'), (SELECT id FROM places WHERE place_name='잠실한강공원'), '잠실 한강 러닝에 Avicii Wake Me Up 최고', 37.519300, 127.080600, ST_SetSRID(ST_MakePoint(127.080600, 37.519300), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_woojin'), (SELECT id FROM tracks WHERE spotify_track_id='6habFhsceSTjwMFa8CqA8A'), (SELECT id FROM places WHERE place_name='송리단길'), '송리단길 맛집 투어에 Despacito 라틴 바이브', 37.509300, 127.098200, ST_SetSRID(ST_MakePoint(127.098200, 37.509300), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+
+-- ─── 강동구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_seoyeon'), (SELECT id FROM tracks WHERE spotify_track_id='53RF5JR4dVaJapJbweexyH'), (SELECT id FROM places WHERE place_name='암사동 유적지'), '유적지에서 Fujii Kaze Shinunoga E-Wa 아시아 感', 37.551600, 127.131200, ST_SetSRID(ST_MakePoint(127.131200, 37.551600), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_junho'), (SELECT id FROM tracks WHERE spotify_track_id='0nrRP2bk19rLc0NV8nRBOE'), (SELECT id FROM places WHERE place_name='광나루한강공원'), '한강 러닝에 Avicii Wake Me Up 활력 충전', 37.541200, 127.100500, ST_SetSRID(ST_MakePoint(127.100500, 37.541200), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+
+-- ─── 강서구/구로구/금천구 신규 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_hyejin'), (SELECT id FROM tracks WHERE spotify_track_id='2dpaYNEQHiRxtZbfNsse99'), (SELECT id FROM places WHERE place_name='마곡나루역 서울식물원'), '식물원에서 Marshmello Happier 힐링', 37.569000, 126.835400, ST_SetSRID(ST_MakePoint(126.835400, 37.569000), 4326), NOW()-INTERVAL '3 days', NOW()-INTERVAL '3 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_taehyung'), (SELECT id FROM tracks WHERE spotify_track_id='0kL3TYRsSXnu0iJvFO3rit'), (SELECT id FROM places WHERE place_name='구로디지털단지역'), '퇴근길에 Drake Hotline Bling 들으면 기분전환', 37.485300, 126.901500, ST_SetSRID(ST_MakePoint(126.901500, 37.485300), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_yuna'), (SELECT id FROM tracks WHERE spotify_track_id='7DfFc7a3mEsPTaLBCfNJRK'), (SELECT id FROM places WHERE place_name='가산디지털단지'), '가디 카페에서 Frank Ocean Thinkin Bout You 몽환', 37.478200, 126.882800, ST_SetSRID(ST_MakePoint(126.882800, 37.478200), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+
+-- ─── 양천구/영등포구 추가 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_jiho'), (SELECT id FROM tracks WHERE spotify_track_id='4fzsfWzRhPawzqhX8Qt9F3'), (SELECT id FROM places WHERE place_name='목동운동장'), '운동장 조깅에 Kanye West Stronger 파이팅', 37.525700, 126.873600, ST_SetSRID(ST_MakePoint(126.873600, 37.525700), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_eunji'), (SELECT id FROM tracks WHERE spotify_track_id='1blficLzeYlqZ9dGROOhCy'), (SELECT id FROM places WHERE place_name='63빌딩'), '63빌딩 전망대에서 Daniel Caesar Best Part 낭만', 37.519780, 126.940120, ST_SetSRID(ST_MakePoint(126.940120, 37.519780), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+
+-- ─── 중랑구/서초구 추가 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_minjae'), (SELECT id FROM tracks WHERE spotify_track_id='5ghIJDpPoe3CfHMGu71E6T'), (SELECT id FROM places WHERE place_name='용마폭포공원'), '폭포 소리와 Nirvana Smells Like Teen Spirit 조합', 37.575400, 127.084300, ST_SetSRID(ST_MakePoint(127.084300, 37.575400), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_nayeon'), (SELECT id FROM tracks WHERE spotify_track_id='4SLaUXPNB1EVddOQAmhnKO'), (SELECT id FROM places WHERE place_name='양재시민의숲'), '비 오는 숲에서 Heize 비도 오고 그래서 완벽', 37.471400, 127.037800, ST_SetSRID(ST_MakePoint(127.037800, 37.471400), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+
+-- ─── 인기 장소 다중추천 추가 ───
+((SELECT id FROM users WHERE spotify_id='spotify_user_donghyun'), (SELECT id FROM tracks WHERE spotify_track_id='3Ua0m0YmEjrMi9XErKcNiR'), (SELECT id FROM places WHERE place_name='홍익대학교'), '홍대에서 (G)I-DLE TOMBOY 들으면 자기 자신 되기', 37.550970, 126.925620, ST_SetSRID(ST_MakePoint(126.925620, 37.550970), 4326), NOW()-INTERVAL '2 days', NOW()-INTERVAL '2 days'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_sohee'), (SELECT id FROM tracks WHERE spotify_track_id='6ocbgoVGwYJhOv1GgI9NsC'), (SELECT id FROM places WHERE place_name='코엑스몰'), '코엑스 별마당에서 Ariana Grande 7 rings 플렉스', 37.512010, 127.058670, ST_SetSRID(ST_MakePoint(127.058670, 37.512010), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_hyunwoo'), (SELECT id FROM tracks WHERE spotify_track_id='6HMLFrHl77GoxCXJWq3MFz'), (SELECT id FROM places WHERE place_name='이태원 거리'), '이태원에서 Jay Park MOMMAE 클럽 분위기', 37.534540, 126.994360, ST_SetSRID(ST_MakePoint(126.994360, 37.534540), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_minji'), (SELECT id FROM tracks WHERE spotify_track_id='0It6VJoMAare1sdHhQWAN8'), (SELECT id FROM places WHERE place_name='명동거리'), '명동에서 EXO Love Shot 들으면 쇼핑 텐션 MAX', 37.563576, 126.985820, ST_SetSRID(ST_MakePoint(126.985820, 37.563576), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_chaewon'), (SELECT id FROM tracks WHERE spotify_track_id='1Qrg8KqiBpW07V7PNxwwwL'), (SELECT id FROM places WHERE place_name='한남동 카페거리'), '한남동에서 SZA Kill Bill 들으면 쿨한 여자 느낌', 37.534600, 127.000450, ST_SetSRID(ST_MakePoint(127.000450, 37.534600), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day'),
+((SELECT id FROM users WHERE spotify_id='spotify_user_hayoung'), (SELECT id FROM tracks WHERE spotify_track_id='7Fy53RtgsGW0wQKlGgPSIZ'), (SELECT id FROM places WHERE place_name='한강공원 여의도'), '여의도 한강 자전거에 Zion.T 양화대교 노을', 37.529030, 126.932570, ST_SetSRID(ST_MakePoint(126.932570, 37.529030), 4326), NOW()-INTERVAL '1 day', NOW()-INTERVAL '1 day')
+ON CONFLICT DO NOTHING;
+
+
+-- ========================================
+-- 11. Additional Likes (신규 추천에 대한 반응)
+-- ========================================
+
+-- aespa Next Level @ 경복궁
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🌌', NOW()-INTERVAL '8 days' FROM recommendations r CROSS JOIN users u WHERE r.message='aespa Next Level 들으면 경복궁도 광야 느낌' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '7 days' FROM recommendations r CROSS JOIN users u WHERE r.message='aespa Next Level 들으면 경복궁도 광야 느낌' AND u.spotify_id='spotify_user_seoyeon' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '7 days' FROM recommendations r CROSS JOIN users u WHERE r.message='aespa Next Level 들으면 경복궁도 광야 느낌' AND u.spotify_id='spotify_user_woojin' ON CONFLICT DO NOTHING;
+
+-- Crush Beautiful @ 북촌한옥마을
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '😍', NOW()-INTERVAL '6 days' FROM recommendations r CROSS JOIN users u WHERE r.message='한옥마을에서 크러쉬 Beautiful 들으니 도깨비 느낌' AND u.spotify_id='spotify_user_minsu' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '5 days' FROM recommendations r CROSS JOIN users u WHERE r.message='한옥마을에서 크러쉬 Beautiful 들으니 도깨비 느낌' AND u.spotify_id='spotify_user_sohee' ON CONFLICT DO NOTHING;
+
+-- FIFTY FIFTY Cupid @ 명동
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '💘', NOW()-INTERVAL '7 days' FROM recommendations r CROSS JOIN users u WHERE r.message='명동에서 FIFTY FIFTY Cupid 들으면 사랑에 빠질듯' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '6 days' FROM recommendations r CROSS JOIN users u WHERE r.message='명동에서 FIFTY FIFTY Cupid 들으면 사랑에 빠질듯' AND u.spotify_id='spotify_user_seoyeon' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🎵', NOW()-INTERVAL '5 days' FROM recommendations r CROSS JOIN users u WHERE r.message='명동에서 FIFTY FIFTY Cupid 들으면 사랑에 빠질듯' AND u.spotify_id='spotify_user_hyejin' ON CONFLICT DO NOTHING;
+
+-- Lady Gaga Bad Romance @ DDP
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '💃', NOW()-INTERVAL '6 days' FROM recommendations r CROSS JOIN users u WHERE r.message='DDP 미래적 건물에 Lady Gaga Bad Romance 찰떡' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '5 days' FROM recommendations r CROSS JOIN users u WHERE r.message='DDP 미래적 건물에 Lady Gaga Bad Romance 찰떡' AND u.spotify_id='spotify_user_donghyun' ON CONFLICT DO NOTHING;
+
+-- DEAN instagram @ 힙지로
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '📸', NOW()-INTERVAL '3 days' FROM recommendations r CROSS JOIN users u WHERE r.message='힙지로 노포에서 DEAN instagram 감성 제대로' AND u.spotify_id='spotify_user_sohee' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='힙지로 노포에서 DEAN instagram 감성 제대로' AND u.spotify_id='spotify_user_hyejin' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🎵', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='힙지로 노포에서 DEAN instagram 감성 제대로' AND u.spotify_id='spotify_user_yuna' ON CONFLICT DO NOTHING;
+
+-- Save Your Tears @ N서울타워
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🌃', NOW()-INTERVAL '5 days' FROM recommendations r CROSS JOIN users u WHERE r.message='남산타워에서 Save Your Tears 들으며 야경 감상' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '😭', NOW()-INTERVAL '4 days' FROM recommendations r CROSS JOIN users u WHERE r.message='남산타워에서 Save Your Tears 들으며 야경 감상' AND u.spotify_id='spotify_user_minsu' ON CONFLICT DO NOTHING;
+
+-- Daniel Caesar Best Part @ 한남동
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '💕', NOW()-INTERVAL '3 days' FROM recommendations r CROSS JOIN users u WHERE r.message='한남동 분위기에 Daniel Caesar Best Part 감성' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='한남동 분위기에 Daniel Caesar Best Part 감성' AND u.spotify_id='spotify_user_sohee' ON CONFLICT DO NOTHING;
+
+-- (G)I-DLE TOMBOY @ 성수카페
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '💪', NOW()-INTERVAL '5 days' FROM recommendations r CROSS JOIN users u WHERE r.message='성수 카페에서 (G)I-DLE TOMBOY 들으면 자신감 뿜뿜' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '4 days' FROM recommendations r CROSS JOIN users u WHERE r.message='성수 카페에서 (G)I-DLE TOMBOY 들으면 자신감 뿜뿜' AND u.spotify_id='spotify_user_minji' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '👑', NOW()-INTERVAL '3 days' FROM recommendations r CROSS JOIN users u WHERE r.message='성수 카페에서 (G)I-DLE TOMBOY 들으면 자신감 뿜뿜' AND u.spotify_id='spotify_user_nayeon' ON CONFLICT DO NOTHING;
+
+-- Frank Ocean @ 서울숲
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🌳', NOW()-INTERVAL '4 days' FROM recommendations r CROSS JOIN users u WHERE r.message='서울숲 벤치에서 Frank Ocean Thinkin Bout You 감성' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '3 days' FROM recommendations r CROSS JOIN users u WHERE r.message='서울숲 벤치에서 Frank Ocean Thinkin Bout You 감성' AND u.spotify_id='spotify_user_seoyeon' ON CONFLICT DO NOTHING;
+
+-- Heize @ 뚝섬역 벽화골목
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🌧️', NOW()-INTERVAL '3 days' FROM recommendations r CROSS JOIN users u WHERE r.message='비 오는 날 벽화골목에서 Heize 비도 오고 그래서' AND u.spotify_id='spotify_user_minsu' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='비 오는 날 벽화골목에서 Heize 비도 오고 그래서' AND u.spotify_id='spotify_user_sohee' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🎵', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='비 오는 날 벽화골목에서 Heize 비도 오고 그래서' AND u.spotify_id='spotify_user_donghyun' ON CONFLICT DO NOTHING;
+
+-- Billie Eilish bad guy @ 홍대
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '😈', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='홍대 버스킹 보면서 Billie Eilish bad guy 분위기' AND u.spotify_id='spotify_user_siwoo' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='홍대 버스킹 보면서 Billie Eilish bad guy 분위기' AND u.spotify_id='spotify_user_eunji' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='홍대 버스킹 보면서 Billie Eilish bad guy 분위기' AND u.spotify_id='spotify_user_minji' ON CONFLICT DO NOTHING;
+
+-- YOASOBI Idol @ 연트럴파크
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '⭐', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='연트럴파크에서 YOASOBI Idol 들으면 애니 주인공' AND u.spotify_id='spotify_user_chaewon' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🎵', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='연트럴파크에서 YOASOBI Idol 들으면 애니 주인공' AND u.spotify_id='spotify_user_taehyung' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='연트럴파크에서 YOASOBI Idol 들으면 애니 주인공' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+
+-- (G)I-DLE TOMBOY @ 홍대
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='홍대에서 (G)I-DLE TOMBOY 들으면 자기 자신 되기' AND u.spotify_id='spotify_user_eunji' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '👑', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='홍대에서 (G)I-DLE TOMBOY 들으면 자기 자신 되기' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+
+-- Bruno Mars 24K Magic @ 여의도
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '✨', NOW()-INTERVAL '3 days' FROM recommendations r CROSS JOIN users u WHERE r.message='여의도 한강에서 Bruno Mars 24K Magic 파티' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '💃', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='여의도 한강에서 Bruno Mars 24K Magic 파티' AND u.spotify_id='spotify_user_woojin' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='여의도 한강에서 Bruno Mars 24K Magic 파티' AND u.spotify_id='spotify_user_hyejin' ON CONFLICT DO NOTHING;
+
+-- Imagine Dragons Believer @ 롯데월드타워
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🏙️', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='123층에서 Imagine Dragons Believer 외치면' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='123층에서 Imagine Dragons Believer 외치면' AND u.spotify_id='spotify_user_woojin' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='123층에서 Imagine Dragons Believer 외치면' AND u.spotify_id='spotify_user_taehyung' ON CONFLICT DO NOTHING;
+
+-- TWICE The Feels @ 코엑스
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '💖', NOW()-INTERVAL '3 days' FROM recommendations r CROSS JOIN users u WHERE r.message='코엑스에서 TWICE The Feels 들으면 행복 가득' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='코엑스에서 TWICE The Feels 들으면 행복 가득' AND u.spotify_id='spotify_user_sohee' ON CONFLICT DO NOTHING;
+
+-- Ariana Grande 7 rings @ 코엑스
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '💎', NOW()-INTERVAL '12 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='코엑스 별마당에서 Ariana Grande 7 rings 플렉스' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '✨', NOW()-INTERVAL '6 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='코엑스 별마당에서 Ariana Grande 7 rings 플렉스' AND u.spotify_id='spotify_user_eunji' ON CONFLICT DO NOTHING;
+
+-- ATEEZ Guerrilla @ 반포한강공원
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='반포 분수쇼에 ATEEZ Guerrilla 퍼포먼스 느낌' AND u.spotify_id='spotify_user_minsu' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='반포 분수쇼에 ATEEZ Guerrilla 퍼포먼스 느낌' AND u.spotify_id='spotify_user_jiho' ON CONFLICT DO NOTHING;
+
+-- SZA Kill Bill @ 중앙대
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '⚔️', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='중앙대에서 SZA Kill Bill 들으면 영화 주인공' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='중앙대에서 SZA Kill Bill 들으면 영화 주인공' AND u.spotify_id='spotify_user_sohee' ON CONFLICT DO NOTHING;
+
+-- Zion.T 양화대교 @ 여의도
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🌅', NOW()-INTERVAL '12 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='여의도 한강 자전거에 Zion.T 양화대교 노을' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '6 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='여의도 한강 자전거에 Zion.T 양화대교 노을' AND u.spotify_id='spotify_user_minsu' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🎵', NOW()-INTERVAL '3 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='여의도 한강 자전거에 Zion.T 양화대교 노을' AND u.spotify_id='spotify_user_seoyeon' ON CONFLICT DO NOTHING;
+
+-- Coldplay Yellow @ 고대
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🍂', NOW()-INTERVAL '4 days' FROM recommendations r CROSS JOIN users u WHERE r.message='고대 가을 캠퍼스에서 Coldplay Yellow 낭만' AND u.spotify_id='spotify_user_minsu' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '3 days' FROM recommendations r CROSS JOIN users u WHERE r.message='고대 가을 캠퍼스에서 Coldplay Yellow 낭만' AND u.spotify_id='spotify_user_woojin' ON CONFLICT DO NOTHING;
+
+-- EXO Love Shot @ 건대
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '4 days' FROM recommendations r CROSS JOIN users u WHERE r.message='커먼그라운드에서 EXO Love Shot 들으면 텐션' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '3 days' FROM recommendations r CROSS JOIN users u WHERE r.message='커먼그라운드에서 EXO Love Shot 들으면 텐션' AND u.spotify_id='spotify_user_eunji' ON CONFLICT DO NOTHING;
+
+-- Jay Park MOMMAE @ 이태원 (new)
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '12 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='이태원에서 Jay Park MOMMAE 클럽 분위기' AND u.spotify_id='spotify_user_donghyun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '😎', NOW()-INTERVAL '6 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='이태원에서 Jay Park MOMMAE 클럽 분위기' AND u.spotify_id='spotify_user_taehyung' ON CONFLICT DO NOTHING;
+
+-- Kendrick HUMBLE @ 합정
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🎤', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='합정 카페에서 Kendrick Lamar HUMBLE 작업용' AND u.spotify_id='spotify_user_donghyun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='합정 카페에서 Kendrick Lamar HUMBLE 작업용' AND u.spotify_id='spotify_user_taehyung' ON CONFLICT DO NOTHING;
+
+-- Red Velvet Psycho @ 대림창고
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🖤', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='대림창고 전시에 Red Velvet Psycho 분위기' AND u.spotify_id='spotify_user_eunji' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='대림창고 전시에 Red Velvet Psycho 분위기' AND u.spotify_id='spotify_user_nayeon' ON CONFLICT DO NOTHING;
+
+-- Dua Lipa Don't Start Now @ 어니언
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '💃', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='어니언에서 Dua Lipa Don''t Start Now 기분 전환' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '12 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='어니언에서 Dua Lipa Don''t Start Now 기분 전환' AND u.spotify_id='spotify_user_seoyeon' ON CONFLICT DO NOTHING;
+
+-- Avicii Wake Me Up @ 뚝섬유원지
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '☀️', NOW()-INTERVAL '3 days' FROM recommendations r CROSS JOIN users u WHERE r.message='한강에서 Avicii Wake Me Up 들으면 자유 느낌' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='한강에서 Avicii Wake Me Up 들으면 자유 느낌' AND u.spotify_id='spotify_user_minsu' ON CONFLICT DO NOTHING;
+
+-- Daft Punk Get Lucky @ 경의선숲길
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🤖', NOW()-INTERVAL '12 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='경의선숲길에서 Daft Punk Get Lucky 기분UP' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '6 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='경의선숲길에서 Daft Punk Get Lucky 기분UP' AND u.spotify_id='spotify_user_sohee' ON CONFLICT DO NOTHING;
+
+-- Nirvana @ 도봉산
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🏔️', NOW()-INTERVAL '3 days' FROM recommendations r CROSS JOIN users u WHERE r.message='등산길에 Nirvana Smells Like Teen Spirit 에너지' AND u.spotify_id='spotify_user_jiho' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '2 days' FROM recommendations r CROSS JOIN users u WHERE r.message='등산길에 Nirvana Smells Like Teen Spirit 에너지' AND u.spotify_id='spotify_user_taehyung' ON CONFLICT DO NOTHING;
+
+-- Post Malone Circles @ 선유도
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🌅', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='선유도 일몰에 Post Malone Circles 루프' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '12 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='선유도 일몰에 Post Malone Circles 루프' AND u.spotify_id='spotify_user_seoyeon' ON CONFLICT DO NOTHING;
+
+-- ATEEZ Guerrilla @ 올림픽공원
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🎤', NOW()-INTERVAL '1 day' FROM recommendations r CROSS JOIN users u WHERE r.message='올림픽공원에서 ATEEZ Guerrilla 콘서트 느낌' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '12 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='올림픽공원에서 ATEEZ Guerrilla 콘서트 느낌' AND u.spotify_id='spotify_user_woojin' ON CONFLICT DO NOTHING;
+
+-- Heize @ 양재시민의숲
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🌧️', NOW()-INTERVAL '12 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='비 오는 숲에서 Heize 비도 오고 그래서 완벽' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '6 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='비 오는 숲에서 Heize 비도 오고 그래서 완벽' AND u.spotify_id='spotify_user_minsu' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🎵', NOW()-INTERVAL '3 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='비 오는 숲에서 Heize 비도 오고 그래서 완벽' AND u.spotify_id='spotify_user_sohee' ON CONFLICT DO NOTHING;
+
+-- SZA Kill Bill @ 한남동
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '⚔️', NOW()-INTERVAL '12 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='한남동에서 SZA Kill Bill 들으면 쿨한 여자 느낌' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '6 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='한남동에서 SZA Kill Bill 들으면 쿨한 여자 느낌' AND u.spotify_id='spotify_user_hyejin' ON CONFLICT DO NOTHING;
+
+-- EXO Love Shot @ 명동
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '❤️', NOW()-INTERVAL '12 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='명동에서 EXO Love Shot 들으면 쇼핑 텐션 MAX' AND u.spotify_id='spotify_user_jieun' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🔥', NOW()-INTERVAL '6 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='명동에서 EXO Love Shot 들으면 쇼핑 텐션 MAX' AND u.spotify_id='spotify_user_chaewon' ON CONFLICT DO NOTHING;
+INSERT INTO recommendation_likes (recommendation_id, user_id, emoji, created_at)
+SELECT r.id, u.id, '🎵', NOW()-INTERVAL '3 hours' FROM recommendations r CROSS JOIN users u WHERE r.message='명동에서 EXO Love Shot 들으면 쇼핑 텐션 MAX' AND u.spotify_id='spotify_user_eunji' ON CONFLICT DO NOTHING;

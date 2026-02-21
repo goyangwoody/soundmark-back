@@ -118,7 +118,7 @@ async def get_llm_recommendation_endpoint(
     """
     result = await get_llm_recommendations(db, current_user)
 
-    if not result["llm_recommended_tracks"]:
+    if not result["places"]:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No recommendations found. Create some recommendations first.",

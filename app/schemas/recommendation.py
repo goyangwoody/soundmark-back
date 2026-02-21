@@ -136,48 +136,27 @@ class PlaceRecommendationResponse(BaseModel):
 # LLM-based Recommendation (v2)
 # ========================================
 
-class LLMRecommendedTrack(BaseModel):
-    """A track recommended by the LLM"""
-    title: str
-    artist: str
-
-
-class MatchedRecommendation(BaseModel):
-    """A recommendation from our DB that matches an LLM-recommended track"""
-    recommendation_id: int
-    track: TrackResponse
-    message: Optional[str] = None
+class LLMPlaceResult(BaseModel):
+    """A place matched from LLM-recommended tracks, with extracted keywords"""
     place_name: Optional[str] = None
     address: Optional[str] = None
     lat: float
     lng: float
-    created_by: UserResponse
-
-
-class LLMPlaceResult(BaseModel):
-    """A place where LLM-recommended tracks have been planted, with extracted keywords"""
-    llm_track: LLMRecommendedTrack = Field(..., description="The track LLM recommended")
-    matched_recommendations: list[MatchedRecommendation] = Field(
-        ..., description="Recommendations in our DB matching this track"
-    )
-    place_keywords: list[str] = Field(
+    keywords: list[str] = Field(
         default_factory=list,
-        description="Keywords extracted from recommendation messages at these places"
+        description="Keywords extracted from recommendation messages at this place"
+    )
+    likelihood: float = Field(
+        ..., ge=0, le=1,
+        description="Confidence score (0~1) based on how many LLM-recommended tracks were found at this place"
     )
 
 
 class LLMRecommendationResponse(BaseModel):
-    """Full response for LLM-based recommendation (v2)"""
+    """Response for LLM-based recommendation (v2)"""
     user_taste_keywords: list[str] = Field(
         ..., description="Keywords describing the user's music taste"
     )
-    llm_recommended_tracks: list[LLMRecommendedTrack] = Field(
-        ..., description="All 10 tracks recommended by the LLM"
-    )
-    results: list[LLMPlaceResult] = Field(
-        ..., description="Matched results with places and keywords (only tracks found in DB)"
-    )
-    unmatched_tracks: list[LLMRecommendedTrack] = Field(
-        default_factory=list,
-        description="LLM-recommended tracks not found in our DB"
+    places: list[LLMPlaceResult] = Field(
+        ..., description="Matched places with atmosphere keywords"
     )

@@ -113,16 +113,16 @@ class LLMService:
             return {k: [] for k in groups}
 
         system_prompt = (
-            "You are a keyword extraction expert. "
-            "The user will provide a JSON object where each key is a track identifier "
-            "and each value is a list of short messages people wrote about that track at specific places.\n"
-            "For EACH key, extract 3-8 representative keywords (in Korean or English) that capture "
-            "the mood, atmosphere, emotions, and themes from those messages.\n\n"
-            "IMPORTANT: Respond ONLY with valid JSON. No markdown, no explanation.\n"
-            "Response format (same keys as input):\n"
+            "너는 키워드 추출 전문가야. "
+            "사용자가 JSON 객체를 제공할 거야. 각 키는 장소 식별자이고, "
+            "각 값은 사람들이 그 장소에서 음악에 대해 작성한 짧은 메시지 목록이야.\n"
+            "각 키에 대해, 그 메시지들에서 분위기, 감성, 감정, 테마를 포착하는 "
+            "대표 키워드 3~8개를 한국어로 추출해.\n\n"
+            "중요: 반드시 유효한 JSON만 응답해. 마크다운이나 설명 없이.\n"
+            "응답 형식 (입력과 같은 키):\n"
             '{\n'
-            '  "key1": ["keyword1", "keyword2", ...],\n'
-            '  "key2": ["keyword1", "keyword2", ...]\n'
+            '  "key1": ["키워드1", "키워드2", ...],\n'
+            '  "key2": ["키워드1", "키워드2", ...]\n'
             '}'
         )
 

@@ -482,33 +482,18 @@ data class PopularTracksResponse(
 // LLM-based Recommendation (v2)
 // ========================================
 
-data class LLMRecommendedTrack(
-    val title: String,
-    val artist: String
-)
-
-data class MatchedRecommendation(
-    val recommendationId: Int,
-    val track: TrackResponse,
-    val message: String?,
+data class LLMPlaceResult(
     val placeName: String?,
     val address: String?,
     val lat: Double,
     val lng: Double,
-    val createdBy: UserResponse
-)
-
-data class LLMPlaceResult(
-    val llmTrack: LLMRecommendedTrack,
-    val matchedRecommendations: List<MatchedRecommendation>,
-    val placeKeywords: List<String>
+    val keywords: List<String>,
+    val likelihood: Double
 )
 
 data class LLMRecommendationResponse(
     val userTasteKeywords: List<String>,
-    val llmRecommendedTracks: List<LLMRecommendedTrack>,
-    val results: List<LLMPlaceResult>,
-    val unmatchedTracks: List<LLMRecommendedTrack>
+    val places: List<LLMPlaceResult>
 )
 ```
 
@@ -848,17 +833,8 @@ fun loadLLMRecommendations() {
                 token = authToken
             )
             
-            // 사용자 취향 키워드
-            _tasteKeywords.value = response.userTasteKeywords
-            
-            // LLM이 추천한 전체 트랙 목록
-            _llmTracks.value = response.llmRecommendedTracks
-            
-            // DB에서 매칭된 결과 (장소 + 키워드 포함)
-            _llmResults.value = response.results
-            
-            // DB에 없는 추천곡
-            _unmatchedTracks.value = response.unmatchedTracks
+            // DB에서 매칭된 장소 + 키워드
+            _llmPlaces.value = response.places
             
         } catch (e: HttpException) {
             if (e.code() == 404) {
