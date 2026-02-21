@@ -199,19 +199,19 @@ interface MapService {
 
 // UserService.kt
 interface UserService {
+    @GET("/api/v1/users/me")
+    suspend fun getMyProfile(
+        @Header("Authorization") token: String
+    ): UserWithStatsResponse
+
     @GET("/api/v1/users/{user_id}")
     suspend fun getUserProfile(
         @Path("user_id") userId: Int,
         @Header("Authorization") token: String? = null
     ): UserWithStatsResponse
     
-    @GET("/api/v1/users/{user_id}/stats")
-    suspend fun getUserStats(
-        @Path("user_id") userId: Int
-    ): FollowStatsResponse
-    
     @POST("/api/v1/users/{user_id}/follow")
-    suspend fun followUser(
+    suspend fun followUser((
         @Path("user_id") userId: Int,
         @Header("Authorization") token: String
     ): FollowResponse
@@ -320,13 +320,20 @@ data class UserWithStatsResponse(
     val createdAt: String,
     val followerCount: Int,
     val followingCount: Int,
+    val recommendationCount: Int,
     val isFollowing: Boolean,
-    val isFollowedBy: Boolean
+    val isFollowedBy: Boolean,
+    val recommendations: List<RecommendationSummary>
 )
 
-data class FollowStatsResponse(
-    val followerCount: Int,
-    val followingCount: Int
+data class RecommendationSummary(
+    val id: Int,
+    val trackTitle: String,
+    val trackArtist: String,
+    val albumCoverUrl: String?,
+    val message: String?,
+    val placeName: String?,
+    val createdAt: String
 )
 
 data class FollowResponse(
@@ -395,6 +402,23 @@ class MainActivity : AppCompatActivity() {
 class UserViewModel : ViewModel() {
     private val authToken = "Bearer YOUR_JWT_TOKEN"
     
+    fun loadMyProfile() {
+        viewModelScope.launch {
+            try {
+                val profile = ApiClient.userService.getMyProfile(
+                    token = authToken
+                )
+                
+                // UI 업데이트 - 프로필 + 추천 피드
+                _userProfile.value = profile
+                _recommendations.value = profile.recommendations
+                
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Error loading my profile", e)
+            }
+        }
+    }
+    
     fun loadUserProfile(userId: Int) {
         viewModelScope.launch {
             try {
@@ -403,8 +427,9 @@ class UserViewModel : ViewModel() {
                     token = authToken
                 )
                 
-                // UI 업데이트
+                // UI 업데이트 - 프로필 + 추천 피드
                 _userProfile.value = profile
+                _recommendations.value = profile.recommendations
                 
             } catch (e: Exception) {
                 Log.e("UserViewModel", "Error loading profile", e)

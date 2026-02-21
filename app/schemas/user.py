@@ -1,9 +1,13 @@
 """
 User and Follow related Pydantic schemas
 """
-from typing import Optional
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
 from pydantic import BaseModel
 from datetime import datetime
+
+if TYPE_CHECKING:
+    pass
 
 
 class UserBase(BaseModel):
@@ -39,11 +43,13 @@ class FollowStats(BaseModel):
 
 
 class UserWithStats(UserDetail):
-    """User with follow statistics"""
+    """User with follow statistics and recommendation feed"""
     follower_count: int
     following_count: int
+    recommendation_count: int = 0  # Number of recommendations created by this user
     is_following: bool = False  # Whether current user is following this user
     is_followed_by: bool = False  # Whether this user is following current user
+    recommendations: list = []  # List of RecommendationSummary
 
 
 class FollowResponse(BaseModel):

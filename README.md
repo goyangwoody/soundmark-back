@@ -310,8 +310,38 @@ JWT 토큰 갱신
 
 ### 👥 사용자 & 팔로우 (Users & Follow) - `/api/v1/users`
 
+#### `GET /users/me`
+내 프로필 조회 (추천 피드 포함)
+- **인증 필요**: ✅
+- **응답**: `UserWithStats`
+  ```json
+  {
+    "id": 1,
+    "spotify_id": "spotify:user:xxxxx",
+    "display_name": "홍길동",
+    "email": "user@example.com",
+    "created_at": "2026-02-20T10:00:00",
+    "follower_count": 42,
+    "following_count": 15,
+    "recommendation_count": 5,
+    "is_following": false,
+    "is_followed_by": false,
+    "recommendations": [
+      {
+        "id": 10,
+        "track_title": "Blinding Lights",
+        "track_artist": "The Weeknd",
+        "album_cover_url": "https://i.scdn.co/image/...",
+        "message": "이 카페에서 들으면 최고",
+        "place_name": "스타벅스 강남점",
+        "created_at": "2026-02-20T10:00:00"
+      }
+    ]
+  }
+  ```
+
 #### `GET /users/{user_id}`
-사용자 프로필 및 팔로우 통계 조회
+사용자 프로필 및 팔로우 통계 조회 (추천 피드 포함)
 - **인증 필요**: ❌ (선택적, 인증 시 관계 정보 포함)
 - **응답**: `UserWithStats`
   ```json
@@ -323,22 +353,23 @@ JWT 토큰 갱신
     "created_at": "2026-02-20T10:00:00",
     "follower_count": 42,
     "following_count": 15,
+    "recommendation_count": 5,
     "is_following": false,
-    "is_followed_by": true
+    "is_followed_by": true,
+    "recommendations": [
+      {
+        "id": 10,
+        "track_title": "Blinding Lights",
+        "track_artist": "The Weeknd",
+        "album_cover_url": "https://i.scdn.co/image/...",
+        "message": "이 카페에서 들으면 최고",
+        "place_name": "스타벅스 강남점",
+        "created_at": "2026-02-20T10:00:00"
+      }
+    ]
   }
   ```
 - **로직**: 인증된 경우 `is_following`, `is_followed_by` 관계 정보 포함
-
-#### `GET /users/{user_id}/stats`
-사용자 팔로우 통계만 조회
-- **인증 필요**: ❌
-- **응답**: `FollowStats`
-  ```json
-  {
-    "follower_count": 42,
-    "following_count": 15
-  }
-  ```
 
 #### `POST /users/{user_id}/follow`
 사용자 팔로우

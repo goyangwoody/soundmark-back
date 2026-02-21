@@ -29,8 +29,8 @@ python generate_openapi.py
 - `GET  /nearby` - 주변 추천 조회 (위도/경도 기반) 🔒
 
 ### Users & Follow (`/api/v1/users`)
-- `GET  /{user_id}` - 사용자 프로필 및 팔로우 통계 조회
-- `GET  /{user_id}/stats` - 팔로우 통계만 조회
+- `GET  /me` - 내 프로필 조회 (추천 피드 포함) 🔒
+- `GET  /{user_id}` - 사용자 프로필 및 팔로우 통계 조회 (추천 피드 포함)
 - `POST /{user_id}/follow` - 사용자 팔로우 🔒
 - `DELETE /{user_id}/follow` - 사용자 언팔로우 🔒
 - `GET  /{user_id}/followers` - 팔로워 목록 조회

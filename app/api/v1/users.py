@@ -11,20 +11,87 @@ from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.user import User
 from app.models.follow import Follow
+from app.models.recommendation import Recommendation
+from app.models.track import Track
+from app.models.place import Place
 from app.schemas.user import (
     UserPublic,
     UserDetail,
     UserWithStats,
-    FollowStats,
     FollowResponse,
     FollowersResponse,
     FollowingResponse
 )
+from app.schemas.recommendation import RecommendationSummary
 from app.core.security import get_current_user, get_current_user_optional
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/users", tags=["Users & Follow"])
+
+
+@router.get("/me", response_model=UserWithStats)
+async def get_my_profile(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get current user's profile with statistics
+    
+    Returns:
+        Current user profile with follower/following counts and recommendation count
+    """
+    # Get follower count
+    follower_count_query = select(func.count(Follow.id)).where(Follow.following_id == current_user.id)
+    follower_count_result = await db.execute(follower_count_query)
+    follower_count = follower_count_result.scalar() or 0
+    
+    # Get following count
+    following_count_query = select(func.count(Follow.id)).where(Follow.follower_id == current_user.id)
+    following_count_result = await db.execute(following_count_query)
+    following_count = following_count_result.scalar() or 0
+    
+    # Get recommendations with track and place info
+    recommendations_query = (
+        select(Recommendation, Track, Place)
+        .join(Track, Recommendation.track_id == Track.id)
+        .outerjoin(Place, Recommendation.place_id == Place.id)
+        .where(
+            Recommendation.user_id == current_user.id,
+            Recommendation.deleted_at.is_(None)
+        )
+        .order_by(Recommendation.created_at.desc())
+    )
+    recommendations_result = await db.execute(recommendations_query)
+    recommendations_rows = recommendations_result.all()
+    recommendation_count = len(recommendations_rows)
+    
+    recommendations = [
+        RecommendationSummary(
+            id=rec.id,
+            track_title=track.title,
+            track_artist=track.artist,
+            album_cover_url=track.album_cover_url,
+            message=rec.message,
+            place_name=place.place_name if place else None,
+            created_at=rec.created_at
+        )
+        for rec, track, place in recommendations_rows
+    ]
+    
+    return UserWithStats(
+        id=current_user.id,
+        spotify_id=current_user.spotify_id,
+        display_name=current_user.display_name,
+        email=current_user.email,
+        created_at=current_user.created_at,
+        follower_count=follower_count,
+        following_count=following_count,
+        recommendation_count=recommendation_count,
+        is_following=False,
+        is_followed_by=False,
+        recommendations=recommendations
+    )
 
 
 @router.get("/{user_id}", response_model=UserWithStats)
@@ -63,6 +130,34 @@ async def get_user_profile(
     following_count_result = await db.execute(following_count_query)
     following_count = following_count_result.scalar() or 0
     
+    # Get recommendations with track and place info
+    recommendations_query = (
+        select(Recommendation, Track, Place)
+        .join(Track, Recommendation.track_id == Track.id)
+        .outerjoin(Place, Recommendation.place_id == Place.id)
+        .where(
+            Recommendation.user_id == user_id,
+            Recommendation.deleted_at.is_(None)
+        )
+        .order_by(Recommendation.created_at.desc())
+    )
+    recommendations_result = await db.execute(recommendations_query)
+    recommendations_rows = recommendations_result.all()
+    recommendation_count = len(recommendations_rows)
+    
+    recommendations = [
+        RecommendationSummary(
+            id=rec.id,
+            track_title=track.title,
+            track_artist=track.artist,
+            album_cover_url=track.album_cover_url,
+            message=rec.message,
+            place_name=place.place_name if place else None,
+            created_at=rec.created_at
+        )
+        for rec, track, place in recommendations_rows
+    ]
+    
     # Check relationship with current user
     is_following = False
     is_followed_by = False
@@ -96,48 +191,10 @@ async def get_user_profile(
         created_at=user.created_at,
         follower_count=follower_count,
         following_count=following_count,
+        recommendation_count=recommendation_count,
         is_following=is_following,
-        is_followed_by=is_followed_by
-    )
-
-
-@router.get("/{user_id}/stats", response_model=FollowStats)
-async def get_user_follow_stats(
-    user_id: int,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Get user's follow statistics
-    
-    Args:
-        user_id: ID of the user
-    
-    Returns:
-        Follower and following counts
-    """
-    # Check if user exists
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    # Get follower count
-    follower_count_query = select(func.count(Follow.id)).where(Follow.following_id == user_id)
-    follower_count_result = await db.execute(follower_count_query)
-    follower_count = follower_count_result.scalar() or 0
-    
-    # Get following count
-    following_count_query = select(func.count(Follow.id)).where(Follow.follower_id == user_id)
-    following_count_result = await db.execute(following_count_query)
-    following_count = following_count_result.scalar() or 0
-    
-    return FollowStats(
-        follower_count=follower_count,
-        following_count=following_count
+        is_followed_by=is_followed_by,
+        recommendations=recommendations
     )
 
 
