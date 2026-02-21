@@ -1,7 +1,7 @@
 """Add refresh tokens table
 
-Revision ID: 002_add_refresh_tokens
-Revises: 001_initial_schema_with_postgis_support
+Revision ID: 002
+Revises: 001
 Create Date: 2026-02-21
 
 """
@@ -11,8 +11,8 @@ from datetime import datetime
 
 
 # revision identifiers, used by Alembic.
-revision = '002_add_refresh_tokens'
-down_revision = '001_initial_schema_with_postgis_support'
+revision = '002'
+down_revision = '001'
 branch_labels = None
 depends_on = None
 
