@@ -6,8 +6,6 @@ from typing import Optional, List, Tuple, Dict
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
-from geoalchemy2.functions import ST_MakePoint
-
 from app.models.user import User
 from app.models.track import Track
 from app.models.place import Place
@@ -103,7 +101,7 @@ async def get_or_create_place(
             return place
     
     # Create new place
-    geom_expr = ST_MakePoint(lng, lat, type_='POINT', srid=4326)
+    geom_expr = create_point_geom(lat, lng)
     
     place = Place(
         google_place_id=place_input.google_place_id if place_input.source == "google" else None,
@@ -153,7 +151,7 @@ async def create_recommendation(
     place = await get_or_create_place(db, lat, lng, place_input)
     
     # Create recommendation
-    geom_expr = ST_MakePoint(lng, lat, type_='POINT', srid=4326)
+    geom_expr = create_point_geom(lat, lng)
     
     recommendation = Recommendation(
         user_id=user.id,

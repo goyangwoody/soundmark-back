@@ -4,7 +4,7 @@ PostGIS utility functions for location-based operations
 from typing import Tuple
 from sqlalchemy import select, func, cast, text, literal_column
 from sqlalchemy.ext.asyncio import AsyncSession
-from geoalchemy2.functions import ST_DWithin, ST_Distance, ST_MakePoint
+from geoalchemy2.functions import ST_DWithin, ST_Distance, ST_MakePoint, ST_SetSRID
 from geoalchemy2.elements import WKTElement
 
 from app.models.recommendation import Recommendation
@@ -33,9 +33,9 @@ def create_point_geom(lat: float, lng: float):
         lng: Longitude
         
     Returns:
-        SQLAlchemy expression for ST_MakePoint
+        WKTElement with SRID 4326
     """
-    return ST_MakePoint(lng, lat, type_='POINT', srid=4326)
+    return WKTElement(f'POINT({lng} {lat})', srid=4326)
 
 
 async def calculate_distance_meters(
