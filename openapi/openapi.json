@@ -1,0 +1,1040 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Soundmark API",
+    "description": "Location-based social music recommendation platform",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/auth/spotify/login": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Spotify Login",
+        "description": "Get Spotify authorization URL for user to login\n\nReturns:\n    URL to redirect user to Spotify login page",
+        "operationId": "spotify_login_api_v1_auth_spotify_login_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotifyLoginResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/spotify/callback": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Spotify Callback",
+        "description": "Handle Spotify OAuth callback\n\nExchange authorization code for tokens, create or update user,\nand return our service JWT token\n\nArgs:\n    code: Authorization code from Spotify OAuth\n    db: Database session\n    \nReturns:\n    JWT access token for our service",
+        "operationId": "spotify_callback_api_v1_auth_spotify_callback_post",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Authorization code from Spotify",
+              "title": "Code"
+            },
+            "description": "Authorization code from Spotify"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Current User Info",
+        "description": "Get current authenticated user information\n\nRequires:\n    Valid JWT token in Authorization header\n    \nReturns:\n    Current user information",
+        "operationId": "get_current_user_info_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Refresh Token",
+        "description": "Refresh JWT token\n\nThis endpoint can be used to get a new JWT token.\nIn the future, this could also refresh the Spotify token if needed.\n\nRequires:\n    Valid JWT token in Authorization header\n    \nReturns:\n    New JWT access token",
+        "operationId": "refresh_token_api_v1_auth_refresh_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/recommendations": {
+      "post": {
+        "tags": [
+          "Recommendations"
+        ],
+        "summary": "Create Recommendation Endpoint",
+        "description": "Create a new recommendation\n\nRequires authentication.\n\nArgs:\n    request: Recommendation creation data\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    Created recommendation",
+        "operationId": "create_recommendation_endpoint_api_v1_recommendations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecommendationCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/recommendations/{recommendation_id}": {
+      "get": {
+        "tags": [
+          "Recommendations"
+        ],
+        "summary": "Get Recommendation Detail",
+        "description": "Get recommendation detail\n\n**Distance restriction**: User must be within 200m of the recommendation\nto access full details.\n\nRequires authentication.\n\nArgs:\n    recommendation_id: Recommendation ID\n    lat: User's current latitude\n    lng: User's current longitude\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    Recommendation detail\n    \nRaises:\n    403: If user is outside 200m radius\n    404: If recommendation not found",
+        "operationId": "get_recommendation_detail_api_v1_recommendations__recommendation_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recommendation Id"
+            }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 90.0,
+              "minimum": -90.0,
+              "description": "Current user latitude",
+              "title": "Lat"
+            },
+            "description": "Current user latitude"
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 180.0,
+              "minimum": -180.0,
+              "description": "Current user longitude",
+              "title": "Lng"
+            },
+            "description": "Current user longitude"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/{recommendation_id}/like": {
+      "put": {
+        "tags": [
+          "Recommendations"
+        ],
+        "summary": "Toggle Recommendation Like",
+        "description": "Toggle like on a recommendation\n\nIf user has already liked, it will unlike.\nIf user hasn't liked, it will like.\n\nRequires authentication.\n\nArgs:\n    recommendation_id: Recommendation ID\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    Current like status and count\n    \nRaises:\n    404: If recommendation not found",
+        "operationId": "toggle_recommendation_like_api_v1_recommendations__recommendation_id__like_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recommendation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationLikeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/map/nearby": {
+      "get": {
+        "tags": [
+          "Map"
+        ],
+        "summary": "Get Nearby Map Data",
+        "description": "Get map data with active and inactive recommendations\n\n**Active recommendations**: Within 200m radius, returns full details\n**Inactive counts**: Beyond 200m, returns clustered counts\n\nRequires authentication.\n\nArgs:\n    lat: User's current latitude\n    lng: User's current longitude\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    Map data with active recommendations and inactive clusters",
+        "operationId": "get_nearby_map_data_api_v1_map_nearby_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 90.0,
+              "minimum": -90.0,
+              "description": "User's current latitude",
+              "title": "Lat"
+            },
+            "description": "User's current latitude"
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 180.0,
+              "minimum": -180.0,
+              "description": "User's current longitude",
+              "title": "Lng"
+            },
+            "description": "User's current longitude"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "description": "Health check endpoint\n\nReturns:\n    Status of the service",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "Root"
+        ],
+        "summary": "Root",
+        "description": "Root endpoint with API information\n\nReturns:\n    Welcome message and links",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActiveRecommendation": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "lng": {
+            "type": "number",
+            "title": "Lng"
+          },
+          "distance_meters": {
+            "type": "number",
+            "title": "Distance Meters"
+          },
+          "track": {
+            "$ref": "#/components/schemas/TrackResponse"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "like_count": {
+            "type": "integer",
+            "title": "Like Count",
+            "default": 0
+          },
+          "liked": {
+            "type": "boolean",
+            "title": "Liked",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "lat",
+          "lng",
+          "distance_meters",
+          "track"
+        ],
+        "title": "ActiveRecommendation",
+        "description": "Individual active recommendation (within 200m)"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InactiveCluster": {
+        "properties": {
+          "lat": {
+            "type": "number",
+            "title": "Lat",
+            "description": "Center latitude of cluster"
+          },
+          "lng": {
+            "type": "number",
+            "title": "Lng",
+            "description": "Center longitude of cluster"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of recommendations in cluster"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lat",
+          "lng",
+          "count"
+        ],
+        "title": "InactiveCluster",
+        "description": "Cluster of inactive recommendations (beyond 200m)"
+      },
+      "MapResponse": {
+        "properties": {
+          "active_recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/ActiveRecommendation"
+            },
+            "type": "array",
+            "title": "Active Recommendations",
+            "description": "Recommendations within 200m radius"
+          },
+          "inactive_counts": {
+            "items": {
+              "$ref": "#/components/schemas/InactiveCluster"
+            },
+            "type": "array",
+            "title": "Inactive Counts",
+            "description": "Clustered counts for distant recommendations"
+          }
+        },
+        "type": "object",
+        "title": "MapResponse",
+        "description": "Map view response with active and inactive recommendations"
+      },
+      "PlaceInput": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "'google' or 'manual'"
+          },
+          "google_place_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Google Place Id"
+          },
+          "place_name": {
+            "type": "string",
+            "title": "Place Name"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "place_name"
+        ],
+        "title": "PlaceInput",
+        "description": "Place information input (Google or manual)"
+      },
+      "RecommendationCreateRequest": {
+        "properties": {
+          "lat": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat",
+            "description": "Latitude"
+          },
+          "lng": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lng",
+            "description": "Longitude"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlaceInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "spotify_track_id": {
+            "type": "string",
+            "title": "Spotify Track Id",
+            "description": "Spotify track ID"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Short message about the track"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "Longer note about the track"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lat",
+          "lng",
+          "spotify_track_id"
+        ],
+        "title": "RecommendationCreateRequest",
+        "description": "Request model for creating a recommendation"
+      },
+      "RecommendationDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "lng": {
+            "type": "number",
+            "title": "Lng"
+          },
+          "distance_meters": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance Meters"
+          },
+          "track": {
+            "$ref": "#/components/schemas/TrackResponse"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "like_count": {
+            "type": "integer",
+            "title": "Like Count",
+            "default": 0
+          },
+          "liked": {
+            "type": "boolean",
+            "title": "Liked",
+            "default": false
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "place_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Name"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "lat",
+          "lng",
+          "track",
+          "user",
+          "created_at"
+        ],
+        "title": "RecommendationDetailResponse",
+        "description": "Detailed recommendation response (used in detail view)"
+      },
+      "RecommendationLikeResponse": {
+        "properties": {
+          "liked": {
+            "type": "boolean",
+            "title": "Liked"
+          },
+          "like_count": {
+            "type": "integer",
+            "title": "Like Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "liked",
+          "like_count"
+        ],
+        "title": "RecommendationLikeResponse",
+        "description": "Response for like toggle operation"
+      },
+      "RecommendationResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "lng": {
+            "type": "number",
+            "title": "Lng"
+          },
+          "distance_meters": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance Meters"
+          },
+          "track": {
+            "$ref": "#/components/schemas/TrackResponse"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "like_count": {
+            "type": "integer",
+            "title": "Like Count",
+            "default": 0
+          },
+          "liked": {
+            "type": "boolean",
+            "title": "Liked",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "lat",
+          "lng",
+          "track",
+          "user",
+          "created_at"
+        ],
+        "title": "RecommendationResponse",
+        "description": "Basic recommendation response (used in list views)"
+      },
+      "SpotifyLoginResponse": {
+        "properties": {
+          "authorization_url": {
+            "type": "string",
+            "title": "Authorization Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "authorization_url"
+        ],
+        "title": "SpotifyLoginResponse",
+        "description": "Response model for Spotify login URL"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expires_in"
+        ],
+        "title": "TokenResponse",
+        "description": "Response model for authentication token"
+      },
+      "TrackResponse": {
+        "properties": {
+          "spotify_track_id": {
+            "type": "string",
+            "title": "Spotify Track Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "album": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Album"
+          },
+          "album_cover_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Album Cover Url"
+          },
+          "track_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Track Url"
+          },
+          "preview_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Url"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "spotify_track_id",
+          "title",
+          "artist",
+          "id",
+          "created_at"
+        ],
+        "title": "TrackResponse",
+        "description": "Track response model"
+      },
+      "UserResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "spotify_id": {
+            "type": "string",
+            "title": "Spotify Id"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "profile_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Image Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "spotify_id",
+          "created_at"
+        ],
+        "title": "UserResponse",
+        "description": "Response model for user information"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

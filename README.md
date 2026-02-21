@@ -1051,6 +1051,61 @@ MIT License
 
 ---
 
+## API 문서 및 프론트엔드 연동
+
+### 📚 API 문서
+
+**Swagger UI (대화형 문서):**
+- 로컬: http://localhost:8000/docs
+- 프로덕션: https://yourdomain.com/docs
+
+**ReDoc (깔끔한 문서):**
+- 로컬: http://localhost:8000/redoc
+- 프로덕션: https://yourdomain.com/redoc
+
+**OpenAPI JSON:**
+- 로컬: http://localhost:8000/openapi.json
+- 파일: `openapi/openapi.json`
+
+### 🔄 OpenAPI 스키마 생성
+
+프론트엔드 개발을 위한 OpenAPI 스키마 생성:
+
+```bash
+# OpenAPI JSON/YAML 생성
+python generate_openapi.py
+
+# 생성된 파일 확인
+ls openapi/
+# openapi.json
+# openapi.yaml
+```
+
+### 📱 Kotlin/Android 클라이언트 생성
+
+**OpenAPI Generator 사용 (권장):**
+
+```bash
+# Retrofit2 클라이언트 생성
+openapi-generator-cli generate \
+  -i openapi/openapi.json \
+  -g kotlin \
+  -o android-client \
+  --additional-properties=\
+library=jvm-retrofit2,\
+serializationLibrary=kotlinx_serialization,\
+useCoroutines=true,\
+packageName=com.soundmark.api
+```
+
+**자세한 연동 가이드:**
+- [FRONTEND_INTEGRATION.md](FRONTEND_INTEGRATION.md) - Kotlin/Android 연동 전체 가이드
+- API 클라이언트 코드 예시
+- 인증 플로우 구현 방법
+- Google Maps + Spotify SDK 연동
+
+---
+
 ## 기여
 
 1. Fork the repository
