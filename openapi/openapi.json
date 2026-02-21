@@ -631,6 +631,42 @@
         ]
       }
     },
+    "/api/v1/users/me/place-recommendations": {
+      "get": {
+        "tags": [
+          "Users & Follow"
+        ],
+        "summary": "Get Place Recommendations",
+        "description": "Get genre-based place recommendations from user's recently played tracks.\n\nReturns one card per track (3 cards total). Each card contains the track info, the genre that was used for matching, and the single best-matching place in the DB. Cards are ordered the same as the recently-played list from Spotify.\n\nRequires the user to have a linked Spotify account with a valid access token that includes the `user-read-recently-played` scope.",
+        "operationId": "get_place_recommendations_api_v1_users_me_place_recommendations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceRecommendationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Spotify token expired or invalid"
+          },
+          "404": {
+            "description": "Spotify account not linked"
+          },
+          "502": {
+            "description": "Failed to fetch from Spotify API"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/users/{user_id}": {
       "get": {
         "tags": [
@@ -1161,6 +1197,131 @@
         "title": "RecentlyPlayedResponse",
         "description": "Response for recently played tracks"
       },
+      "TrackWithGenres": {
+        "properties": {
+          "spotify_track_id": {
+            "type": "string",
+            "title": "Spotify Track Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "album": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ],
+            "title": "Album"
+          },
+          "album_cover_url": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ],
+            "title": "Album Cover Url"
+          },
+          "track_url": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ],
+            "title": "Track Url"
+          },
+          "genres": {
+            "type": "array",
+            "items": { "type": "string" },
+            "title": "Genres"
+          }
+        },
+        "type": "object",
+        "required": ["spotify_track_id", "title", "artist", "genres"],
+        "title": "TrackWithGenres",
+        "description": "Recently played track with artist genres"
+      },
+      "PlaceInfo": {
+        "properties": {
+          "place_id": {
+            "type": "integer",
+            "title": "Place Id"
+          },
+          "place_name": {
+            "type": "string",
+            "title": "Place Name"
+          },
+          "address": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ],
+            "title": "Address"
+          },
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "lng": {
+            "type": "number",
+            "title": "Lng"
+          }
+        },
+        "type": "object",
+        "required": ["place_id", "place_name", "lat", "lng"],
+        "title": "PlaceInfo",
+        "description": "Place information for genre-based recommendation"
+      },
+      "TrackPlaceCard": {
+        "properties": {
+          "track": {
+            "$ref": "#/components/schemas/TrackWithGenres"
+          },
+          "matched_genre": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ],
+            "title": "Matched Genre",
+            "description": "The genre used to find the recommended place"
+          },
+          "place": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/PlaceInfo" },
+              { "type": "null" }
+            ],
+            "description": "Recommended place for this track's genre (null if no match)"
+          },
+          "recommendation_count": {
+            "type": "integer",
+            "title": "Recommendation Count",
+            "default": 0,
+            "description": "Number of recommendations of that genre at the place"
+          }
+        },
+        "type": "object",
+        "required": ["track"],
+        "title": "TrackPlaceCard",
+        "description": "A single recommendation card — track + matched genre + recommended place"
+      },
+      "PlaceRecommendationResponse": {
+        "properties": {
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrackPlaceCard"
+            },
+            "title": "Cards",
+            "description": "One card per recently played track"
+          }
+        },
+        "type": "object",
+        "required": ["cards"],
+        "title": "PlaceRecommendationResponse",
+        "description": "Response for genre-based place recommendation — one card per track"
+      },
       "RecommendationCreateRequest": {
         "properties": {
           "lat": {
@@ -1631,6 +1792,21 @@
               }
             ],
             "title": "Preview Url"
+          },
+          "genres": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genres",
+            "description": "List of genres associated with the track's artist(s)"
           },
           "id": {
             "type": "integer",

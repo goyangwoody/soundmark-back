@@ -228,6 +228,11 @@ interface UserService {
         @Header("Authorization") token: String
     ): RecentlyPlayedResponse
 
+    @GET("/api/v1/users/me/place-recommendations")
+    suspend fun getPlaceRecommendations(
+        @Header("Authorization") token: String
+    ): PlaceRecommendationResponse
+
     @GET("/api/v1/users/{user_id}")
     suspend fun getUserProfile(
         @Path("user_id") userId: Int,
@@ -338,7 +343,8 @@ data class TrackResponse(
     val album: String?,
     val albumCoverUrl: String?,
     val trackUrl: String?,
-    val previewUrl: String?
+    val previewUrl: String?,
+    val genres: List<String>?
 )
 
 data class PlaceResponse(
@@ -424,6 +430,35 @@ data class RecentlyPlayedTrack(
 data class RecentlyPlayedResponse(
     val tracks: List<RecentlyPlayedTrack>,
     val total: Int
+)
+
+data class TrackWithGenres(
+    val spotifyTrackId: String,
+    val title: String,
+    val artist: String,
+    val album: String?,
+    val albumCoverUrl: String?,
+    val trackUrl: String?,
+    val genres: List<String>
+)
+
+data class PlaceInfo(
+    val placeId: Int,
+    val placeName: String,
+    val address: String?,
+    val lat: Double,
+    val lng: Double
+)
+
+data class TrackPlaceCard(
+    val track: TrackWithGenres,
+    val matchedGenre: String?,
+    val place: PlaceInfo?,
+    val recommendationCount: Int
+)
+
+data class PlaceRecommendationResponse(
+    val cards: List<TrackPlaceCard>
 )
 
 data class PopularTrackItem(

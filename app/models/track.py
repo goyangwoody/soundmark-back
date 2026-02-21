@@ -4,6 +4,7 @@ Track model - stores Spotify track metadata
 from datetime import datetime
 from sqlalchemy import String, DateTime, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import ARRAY
 from typing import Optional
 
 from app.database import Base
@@ -21,6 +22,7 @@ class Track(Base):
     album_cover_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     track_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     preview_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    genres: Mapped[Optional[list[str]]] = mapped_column(ARRAY(String), nullable=True, default=list)
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -37,4 +39,4 @@ class Track(Base):
     )
     
     def __repr__(self) -> str:
-        return f"<Track(id={self.id}, spotify_track_id={self.spotify_track_id}, title={self.title})>"
+        return f"<Track(id={self.id}, spotify_track_id={self.spotify_track_id}, title={self.title}, genres={self.genres})>"

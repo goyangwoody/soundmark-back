@@ -23,7 +23,13 @@ from app.schemas.user import (
     FollowersResponse,
     FollowingResponse
 )
-from app.schemas.recommendation import RecommendationSummary
+from app.schemas.recommendation import (
+    RecommendationSummary,
+    PlaceRecommendationResponse,
+    TrackWithGenres,
+    TrackPlaceCard,
+    PlaceInfo,
+)
 from app.schemas.track import RecentlyPlayedResponse, RecentlyPlayedTrack
 from app.models.oauth import OAuthAccount
 from app.services.spotify import spotify_service
@@ -209,6 +215,136 @@ async def get_my_recently_played(
         ],
         total=len(tracks)
     )
+
+
+@router.get("/me/place-recommendations", response_model=PlaceRecommendationResponse)
+async def get_place_recommendations(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get genre-based place recommendations from user's recently played tracks.
+
+    Returns one card per track (3 cards total).  Each card contains the track
+    info, the genre that was used for matching, and the single best-matching
+    place in the DB.  Cards are ordered the same as the recently-played list
+    from Spotify.
+
+    Requires the user to have a linked Spotify account with a valid access
+    token that includes the `user-read-recently-played` scope.
+    """
+    # Get user's Spotify OAuth account
+    oauth_result = await db.execute(
+        select(OAuthAccount).where(
+            OAuthAccount.user_id == current_user.id,
+            OAuthAccount.provider == "spotify"
+        )
+    )
+    oauth_account = oauth_result.scalar_one_or_none()
+
+    if not oauth_account:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Spotify account not linked"
+        )
+
+    # Check if token is expired and refresh if needed
+    from datetime import datetime, timedelta
+    if oauth_account.expires_at and oauth_account.expires_at < datetime.utcnow():
+        if not oauth_account.refresh_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Spotify token expired and no refresh token available"
+            )
+
+        token_info = spotify_service.refresh_access_token(oauth_account.refresh_token)
+        if not token_info:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Failed to refresh Spotify token"
+            )
+
+        oauth_account.access_token = token_info["access_token"]
+        if token_info.get("refresh_token"):
+            oauth_account.refresh_token = token_info["refresh_token"]
+        oauth_account.expires_at = datetime.utcnow() + timedelta(
+            seconds=token_info.get("expires_in", 3600)
+        )
+        oauth_account.updated_at = datetime.utcnow()
+        await db.commit()
+
+    # Step 1: Get recently played tracks with genres from Spotify
+    tracks_with_genres = spotify_service.get_recently_played_with_genres(
+        oauth_account.access_token, limit=3
+    )
+
+    if not tracks_with_genres:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to fetch recently played tracks from Spotify"
+        )
+
+    # Step 2: Load all recommendation rows that have a place and stored genres
+    recs_query = (
+        select(Recommendation, Track, Place)
+        .join(Track, Recommendation.track_id == Track.id)
+        .join(Place, Recommendation.place_id == Place.id)
+        .where(
+            Recommendation.deleted_at.is_(None),
+            Recommendation.place_id.isnot(None),
+            Track.genres.isnot(None)
+        )
+    )
+    recs_result = await db.execute(recs_query)
+    recs = recs_result.all()
+
+    # Build genre -> place -> {place, count} mapping from DB
+    genre_place_count: dict[str, dict[int, dict]] = {}
+    for rec, track, place in recs:
+        for genre in (track.genres or []):
+            if genre not in genre_place_count:
+                genre_place_count[genre] = {}
+            if place.id not in genre_place_count[genre]:
+                genre_place_count[genre][place.id] = {
+                    "place": place,
+                    "count": 0,
+                }
+            genre_place_count[genre][place.id]["count"] += 1
+
+    # Step 3: Build one card per track
+    cards: list[TrackPlaceCard] = []
+    for t in tracks_with_genres:
+        track_obj = TrackWithGenres(**t)
+
+        # Find the best (genre, place) pair for this track
+        best_genre: str | None = None
+        best_place_info: PlaceInfo | None = None
+        best_count = 0
+
+        for genre in t.get("genres", []):
+            if genre in genre_place_count:
+                for pid, info in genre_place_count[genre].items():
+                    if info["count"] > best_count:
+                        best_count = info["count"]
+                        best_genre = genre
+                        best_place_info = PlaceInfo(
+                            place_id=info["place"].id,
+                            place_name=info["place"].place_name,
+                            address=info["place"].address,
+                            lat=info["place"].lat,
+                            lng=info["place"].lng,
+                        )
+
+        cards.append(
+            TrackPlaceCard(
+                track=track_obj,
+                matched_genre=best_genre,
+                place=best_place_info,
+                recommendation_count=best_count,
+            )
+        )
+
+    return PlaceRecommendationResponse(cards=cards)
 
 
 @router.get("/{user_id}", response_model=UserWithStats)

@@ -15,6 +15,7 @@ class TrackBase(BaseModel):
     album_cover_url: Optional[str] = None
     track_url: Optional[str] = None
     preview_url: Optional[str] = None
+    genres: Optional[list[str]] = None
 
 
 class TrackResponse(TrackBase):

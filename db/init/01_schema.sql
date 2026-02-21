@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS tracks (
     album_cover_url TEXT,
     track_url TEXT,
     preview_url TEXT,
+    genres VARCHAR[] DEFAULT '{}',
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

@@ -60,7 +60,8 @@ async def get_or_create_track(
         album=track_metadata.get("album"),
         album_cover_url=track_metadata.get("album_cover_url"),
         track_url=track_metadata.get("track_url"),
-        preview_url=track_metadata.get("preview_url")
+        preview_url=track_metadata.get("preview_url"),
+        genres=track_metadata.get("genres", [])
     )
     
     db.add(track)

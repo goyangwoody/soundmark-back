@@ -151,6 +151,111 @@ components:
       - total
       title: RecentlyPlayedResponse
       type: object
+    TrackWithGenres:
+      description: Recently played track with artist genres
+      properties:
+        spotify_track_id:
+          title: Spotify Track Id
+          type: string
+        title:
+          title: Title
+          type: string
+        artist:
+          title: Artist
+          type: string
+        album:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Album
+        album_cover_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Album Cover Url
+        track_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Track Url
+        genres:
+          items:
+            type: string
+          title: Genres
+          type: array
+      required:
+      - spotify_track_id
+      - title
+      - artist
+      - genres
+      title: TrackWithGenres
+      type: object
+    PlaceInfo:
+      description: Place information for genre-based recommendation
+      properties:
+        place_id:
+          title: Place Id
+          type: integer
+        place_name:
+          title: Place Name
+          type: string
+        address:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Address
+        lat:
+          title: Lat
+          type: number
+        lng:
+          title: Lng
+          type: number
+      required:
+      - place_id
+      - place_name
+      - lat
+      - lng
+      title: PlaceInfo
+      type: object
+    TrackPlaceCard:
+      description: A single recommendation card — track + matched genre + recommended
+        place
+      properties:
+        track:
+          $ref: '#/components/schemas/TrackWithGenres'
+        matched_genre:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Matched Genre
+          description: The genre used to find the recommended place
+        place:
+          anyOf:
+          - $ref: '#/components/schemas/PlaceInfo'
+          - type: 'null'
+          description: Recommended place for this track's genre (null if no match)
+        recommendation_count:
+          title: Recommendation Count
+          type: integer
+          default: 0
+          description: Number of recommendations of that genre at the place
+      required:
+      - track
+      title: TrackPlaceCard
+      type: object
+    PlaceRecommendationResponse:
+      description: Response for genre-based place recommendation — one card per track
+      properties:
+        cards:
+          items:
+            $ref: '#/components/schemas/TrackPlaceCard'
+          title: Cards
+          type: array
+          description: One card per recently played track
+      required:
+      - cards
+      title: PlaceRecommendationResponse
+      type: object
     RecommendationCreateRequest:
       description: Request model for creating a recommendation
       properties:
@@ -468,6 +573,14 @@ components:
           - type: string
           - type: 'null'
           title: Track Url
+        genres:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Genres
+          description: List of genres associated with the track's artist(s)
       required:
       - spotify_track_id
       - title
@@ -1119,6 +1232,33 @@ paths:
       security:
       - HTTPBearer: []
       summary: Get My Recently Played
+      tags:
+      - Users & Follow
+  /api/v1/users/me/place-recommendations:
+    get:
+      description: "Get genre-based place recommendations from user's recently played\
+        \ tracks.\n\nReturns one card per track (3 cards total). Each card contains\
+        \ the track info, the genre that was used for matching, and the single best-matching\
+        \ place in the DB. Cards are ordered the same as the recently-played list\
+        \ from Spotify.\n\nRequires the user to have a linked Spotify account with\
+        \ a valid access token that includes the `user-read-recently-played` scope."
+      operationId: get_place_recommendations_api_v1_users_me_place_recommendations_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaceRecommendationResponse'
+          description: Successful Response
+        '401':
+          description: Spotify token expired or invalid
+        '404':
+          description: Spotify account not linked
+        '502':
+          description: Failed to fetch from Spotify API
+      security:
+      - HTTPBearer: []
+      summary: Get Place Recommendations
       tags:
       - Users & Follow
   /api/v1/users/{user_id}:

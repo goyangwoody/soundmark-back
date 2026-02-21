@@ -93,3 +93,40 @@ class RecommendationLikeResponse(BaseModel):
     """Response for legacy like toggle operation (deprecated)"""
     liked: bool
     like_count: int
+
+
+# ========================================
+# Place Recommendation (Genre-based)
+# ========================================
+
+class TrackWithGenres(BaseModel):
+    """Recently played track with artist genres"""
+    spotify_track_id: str
+    title: str
+    artist: str
+    album: Optional[str] = None
+    album_cover_url: Optional[str] = None
+    track_url: Optional[str] = None
+    genres: list[str]
+
+
+class PlaceInfo(BaseModel):
+    """Place information for genre-based recommendation"""
+    place_id: int
+    place_name: str
+    address: Optional[str] = None
+    lat: float
+    lng: float
+
+
+class TrackPlaceCard(BaseModel):
+    """A single recommendation card: track + matched genre + recommended place"""
+    track: TrackWithGenres
+    matched_genre: Optional[str] = Field(None, description="The genre used to find the recommended place")
+    place: Optional[PlaceInfo] = Field(None, description="Recommended place for this track's genre (null if no match)")
+    recommendation_count: int = Field(0, description="Number of recommendations of that genre at the place")
+
+
+class PlaceRecommendationResponse(BaseModel):
+    """Response for genre-based place recommendation — one card per track"""
+    cards: list[TrackPlaceCard] = Field(..., description="One card per recently played track")
