@@ -151,25 +151,53 @@ def cluster_recommendations_by_grid(
 
 async def get_map_data(
     db: AsyncSession,
-    user_lat: float,
-    user_lng: float,
+    center_lat: float,
+    center_lng: float,
+    my_lat: float,
+    my_lng: float,
     radius_meters: float = 2000
 ) -> List[Tuple[Recommendation, float]]:
     """
     Get all recommendations within specified radius with distances
     
+    Recommendations are fetched based on (center_lat, center_lng).
+    Distance is calculated from (my_lat, my_lng).
+    
     Args:
         db: Database session
-        user_lat: User's latitude
-        user_lng: User's longitude
+        center_lat: Map center latitude (for search area)
+        center_lng: Map center longitude (for search area)
+        my_lat: User's actual latitude (for distance calculation)
+        my_lng: User's actual longitude (for distance calculation)
         radius_meters: Search radius in meters (default 2000m = 2km)
         
     Returns:
-        List of (Recommendation, distance_meters) tuples
+        List of (Recommendation, distance_meters) tuples (distance from my_lat/my_lng)
     """
-    # Get all recommendations within radius
-    recommendations = await get_nearby_recommendations(
-        db, user_lat, user_lng, radius_meters
+    # Build query with relationships
+    query = select(Recommendation).options(
+        selectinload(Recommendation.track),
+        selectinload(Recommendation.user),
+        selectinload(Recommendation.place)
+    ).where(
+        Recommendation.deleted_at.is_(None)
     )
     
-    return recommendations
+    # Filter recommendations within radius of map center (lat, lng)
+    query = filter_by_radius(query, center_lat, center_lng, radius_meters)
+    
+    # Calculate distance from user's actual position (my_lat, my_lng)
+    query = add_distance_column(query, my_lat, my_lng)
+    
+    # Order by distance from user
+    query = query.order_by('distance_meters')
+    
+    # Execute query
+    result = await db.execute(query)
+    rows = result.all()
+    
+    recommendations_with_distances = [
+        (row[0], row[1]) for row in rows
+    ]
+    
+    return recommendations_with_distances

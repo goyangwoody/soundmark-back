@@ -198,10 +198,10 @@ interface RecommendationService {
 interface MapService {
     @GET("/api/v1/map/nearby")
     suspend fun getNearbyRecommendations(
+        @Query("my_lat") myLat: Double,
+        @Query("my_lng") myLng: Double,
         @Query("lat") lat: Double,
         @Query("lng") lng: Double,
-        @Query("radius") radius: Int = 5000,
-        @Query("limit") limit: Int = 50,
         @Header("Authorization") token: String
     ): NearbyResponse
 }
@@ -384,14 +384,14 @@ data class FollowingResponse(
 class MapViewModel : ViewModel() {
     private val authToken = "Bearer YOUR_JWT_TOKEN"
     
-    fun loadNearbyRecommendations(lat: Double, lng: Double) {
+    fun loadNearbyRecommendations(myLat: Double, myLng: Double, lat: Double, lng: Double) {
         viewModelScope.launch {
             try {
                 val response = ApiClient.mapService.getNearbyRecommendations(
+                    myLat = myLat,
+                    myLng = myLng,
                     lat = lat,
                     lng = lng,
-                    radius = 200, // 200m 반경
-                    limit = 50,
                     token = authToken
                 )
                 
@@ -412,8 +412,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // 현재 위치에서 주변 추천 로드
-        viewModel.loadNearbyRecommendations(37.5665, 126.9780)
+        // 현재 위치에서 주변 추천 로드 (사용자 위치 = 지도 중심)
+        viewModel.loadNearbyRecommendations(
+            myLat = 37.5665, myLng = 126.9780,
+            lat = 37.5665, lng = 126.9780
+        )
     }
 }
 

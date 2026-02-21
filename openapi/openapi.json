@@ -438,7 +438,7 @@
           "Map"
         ],
         "summary": "Get Nearby Map Data",
-        "description": "Get all recommendations within 2km radius\n\n**Active**: Within 200m radius (is_active=True)\n**Inactive**: Beyond 200m but within 2km (is_active=False)\n\nRequires authentication.\n\nArgs:\n    lat: User's current latitude\n    lng: User's current longitude\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    All recommendations within 2km with active/inactive status",
+        "description": "Get all recommendations within 10km radius of (lat, lng)\n\nRecommendations are fetched based on (lat, lng) center.\ndistance_meters and is_active are calculated from (my_lat, my_lng).\n\n**Active**: Within 200m from user's actual position (is_active=True)\n**Inactive**: Beyond 200m from user's actual position (is_active=False)\n\nRequires authentication.\n\nArgs:\n    my_lat: User's actual latitude\n    my_lng: User's actual longitude\n    lat: Map center latitude\n    lng: Map center longitude\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    All recommendations within 10km with active/inactive status",
         "operationId": "get_nearby_map_data_api_v1_map_nearby_get",
         "security": [
           {
@@ -447,6 +447,32 @@
         ],
         "parameters": [
           {
+            "name": "my_lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 90.0,
+              "minimum": -90.0,
+              "description": "User's actual latitude (for distance/active calculation)",
+              "title": "My Lat"
+            },
+            "description": "User's actual latitude (for distance/active calculation)"
+          },
+          {
+            "name": "my_lng",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 180.0,
+              "minimum": -180.0,
+              "description": "User's actual longitude (for distance/active calculation)",
+              "title": "My Lng"
+            },
+            "description": "User's actual longitude (for distance/active calculation)"
+          },
+          {
             "name": "lat",
             "in": "query",
             "required": true,
@@ -454,10 +480,10 @@
               "type": "number",
               "maximum": 90.0,
               "minimum": -90.0,
-              "description": "User's current latitude",
+              "description": "Map center latitude (for fetching recommendations)",
               "title": "Lat"
             },
-            "description": "User's current latitude"
+            "description": "Map center latitude (for fetching recommendations)"
           },
           {
             "name": "lng",
@@ -467,10 +493,10 @@
               "type": "number",
               "maximum": 180.0,
               "minimum": -180.0,
-              "description": "User's current longitude",
+              "description": "Map center longitude (for fetching recommendations)",
               "title": "Lng"
             },
-            "description": "User's current longitude"
+            "description": "Map center longitude (for fetching recommendations)"
           }
         ],
         "responses": {
@@ -930,12 +956,12 @@
             },
             "type": "array",
             "title": "Recommendations",
-            "description": "All recommendations within 2km radius"
+            "description": "All recommendations within 10km radius"
           }
         },
         "type": "object",
         "title": "MapResponse",
-        "description": "Map view response with all recommendations within 2km"
+        "description": "Map view response with all recommendations within 10km"
       },
       "PlaceInput": {
         "properties": {

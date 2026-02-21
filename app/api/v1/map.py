@@ -21,31 +21,39 @@ router = APIRouter(prefix="/map", tags=["Map"])
 
 @router.get("/nearby", response_model=MapResponse)
 async def get_nearby_map_data(
-    lat: float = Query(..., description="User's current latitude", ge=-90, le=90),
-    lng: float = Query(..., description="User's current longitude", ge=-180, le=180),
+    my_lat: float = Query(..., description="User's actual latitude (for distance/active calculation)", ge=-90, le=90),
+    my_lng: float = Query(..., description="User's actual longitude (for distance/active calculation)", ge=-180, le=180),
+    lat: float = Query(..., description="Map center latitude (for fetching recommendations)", ge=-90, le=90),
+    lng: float = Query(..., description="Map center longitude (for fetching recommendations)", ge=-180, le=180),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Get all recommendations within 2km radius
+    Get all recommendations within 10km radius of (lat, lng)
     
-    **Active**: Within 200m radius (is_active=True)
-    **Inactive**: Beyond 200m but within 2km (is_active=False)
+    Recommendations are fetched based on (lat, lng) center.
+    distance_meters and is_active are calculated from (my_lat, my_lng).
+    
+    **Active**: Within 200m from user's actual position (is_active=True)
+    **Inactive**: Beyond 200m from user's actual position (is_active=False)
     
     Requires authentication.
     
     Args:
-        lat: User's current latitude
-        lng: User's current longitude
+        my_lat: User's actual latitude
+        my_lng: User's actual longitude
+        lat: Map center latitude
+        lng: Map center longitude
         current_user: Authenticated user
         db: Database session
         
     Returns:
         All recommendations within 2km with active/inactive status
     """
-    # Get all recommendations within 2km
+    # Get all recommendations within 10km of (lat, lng), distance from (my_lat, my_lng)
     recommendations_with_distance = await get_map_data(
-        db, lat, lng, radius_meters=2000
+        db, center_lat=lat, center_lng=lng,
+        my_lat=my_lat, my_lng=my_lng, radius_meters=10000
     )
     
     # Build response

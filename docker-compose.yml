@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: postgis/postgis:15-3.4
@@ -10,7 +12,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-soundmark} -d ${POSTGRES_DB:-soundmark_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-soundmark}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,7 +31,6 @@ services:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
       - JWT_ACCESS_TOKEN_EXPIRE_DAYS=${JWT_ACCESS_TOKEN_EXPIRE_DAYS:-7}
-      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-30}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
       - DEBUG=${DEBUG:-false}
     depends_on:
@@ -43,6 +44,7 @@ services:
     container_name: soundmark-nginx
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:

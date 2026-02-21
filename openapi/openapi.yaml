@@ -60,10 +60,10 @@ components:
       title: HTTPValidationError
       type: object
     MapResponse:
-      description: Map view response with all recommendations within 2km
+      description: Map view response with all recommendations within 10km
       properties:
         recommendations:
-          description: All recommendations within 2km radius
+          description: All recommendations within 10km radius
           items:
             $ref: '#/components/schemas/RecommendationItem'
           title: Recommendations
@@ -703,30 +703,53 @@ paths:
       - Authentication
   /api/v1/map/nearby:
     get:
-      description: "Get all recommendations within 2km radius\n\n**Active**: Within\
-        \ 200m radius (is_active=True)\n**Inactive**: Beyond 200m but within 2km (is_active=False)\n\
-        \nRequires authentication.\n\nArgs:\n    lat: User's current latitude\n  \
-        \  lng: User's current longitude\n    current_user: Authenticated user\n \
-        \   db: Database session\n    \nReturns:\n    All recommendations within 2km\
-        \ with active/inactive status"
+      description: "Get all recommendations within 10km radius of (lat, lng)\n\n\
+        Recommendations are fetched based on (lat, lng) center.\ndistance_meters\
+        \ and is_active are calculated from (my_lat, my_lng).\n\n**Active**: Within\
+        \ 200m from user's actual position (is_active=True)\n**Inactive**: Beyond\
+        \ 200m from user's actual position (is_active=False)\n\nRequires authentication.\
+        \n\nArgs:\n    my_lat: User's actual latitude\n    my_lng: User's actual\
+        \ longitude\n    lat: Map center latitude\n    lng: Map center longitude\
+        \n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\
+        \n    All recommendations within 10km with active/inactive status"
       operationId: get_nearby_map_data_api_v1_map_nearby_get
       parameters:
-      - description: User's current latitude
+      - description: User's actual latitude (for distance/active calculation)
+        in: query
+        name: my_lat
+        required: true
+        schema:
+          description: User's actual latitude (for distance/active calculation)
+          maximum: 90.0
+          minimum: -90.0
+          title: My Lat
+          type: number
+      - description: User's actual longitude (for distance/active calculation)
+        in: query
+        name: my_lng
+        required: true
+        schema:
+          description: User's actual longitude (for distance/active calculation)
+          maximum: 180.0
+          minimum: -180.0
+          title: My Lng
+          type: number
+      - description: Map center latitude (for fetching recommendations)
         in: query
         name: lat
         required: true
         schema:
-          description: User's current latitude
+          description: Map center latitude (for fetching recommendations)
           maximum: 90.0
           minimum: -90.0
           title: Lat
           type: number
-      - description: User's current longitude
+      - description: Map center longitude (for fetching recommendations)
         in: query
         name: lng
         required: true
         schema:
-          description: User's current longitude
+          description: Map center longitude (for fetching recommendations)
           maximum: 180.0
           minimum: -180.0
           title: Lng

@@ -21,8 +21,8 @@ class RecommendationItem(BaseModel):
 
 
 class MapResponse(BaseModel):
-    """Map view response with all recommendations within 2km"""
+    """Map view response with all recommendations within 10km"""
     recommendations: List[RecommendationItem] = Field(
         default_factory=list,
-        description="All recommendations within 2km radius"
+        description="All recommendations within 10km radius"
     )
