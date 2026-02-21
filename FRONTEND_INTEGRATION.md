@@ -169,7 +169,7 @@ interface AuthService {
     
     @POST("/api/v1/auth/refresh")
     suspend fun refreshToken(
-        @Header("Authorization") token: String
+        @Body request: RefreshTokenRequest
     ): TokenResponse
 }
 
@@ -262,8 +262,13 @@ data class SpotifyLoginResponse(
 
 data class TokenResponse(
     val accessToken: String,
+    val refreshToken: String,
     val tokenType: String = "bearer",
     val expiresIn: Int
+)
+
+data class RefreshTokenRequest(
+    val refreshToken: String
 )
 
 data class UserResponse(
@@ -663,11 +668,15 @@ try {
     val response = ApiClient.mapService.getNearbyRecommendations(...)
 } catch (e: HttpException) {
     if (e.code() == 401) {
-        // Token expired, refresh
-        val newToken = ApiClient.authService.refreshToken("Bearer $oldToken")
-        saveToken(newToken.accessToken)
+        // Access token 만료, refresh token으로 갱신
+        val savedRefreshToken = getRefreshToken() // 저장된 refresh token 가져오기
+        val refreshRequest = RefreshTokenRequest(refreshToken = savedRefreshToken)
+        val newTokens = ApiClient.authService.refreshToken(refreshRequest)
         
-        // Retry request
+        // 새 토큰들 저장
+        saveToken(newTokens.accessToken, newTokens.refreshToken)
+        
+        // 원래 요청 재시도
         val response = ApiClient.mapService.getNearbyRecommendations(...)
     }
 }

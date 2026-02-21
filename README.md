@@ -95,6 +95,7 @@ Spotify access token 검증 및 JWT 토큰 발급
   ```json
   {
     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+    "refresh_token": "abc123xyz...",
     "token_type": "bearer",
     "expires_in": 604800
   }
@@ -135,9 +136,30 @@ Spotify OAuth 콜백 처리 및 JWT 토큰 발급
   ```
 
 #### `POST /refresh`
-JWT 토큰 갱신
-- **인증 필요**: ✅ (Bearer token)
-- **응답**: `TokenResponse` (새로운 JWT)
+JWT 토큰 갱신 (Refresh Token 사용)
+- **인증 필요**: ❌ (refresh token만 필요)
+- **요청 바디**: `RefreshTokenRequest`
+  ```json
+  {
+    "refresh_token": "abc123xyz..."
+  }
+  ```
+- **응답**: `TokenResponse` (새로운 JWT access token + refresh token)
+  ```json
+  {
+    "access_token": "eyJ0eXAi...",
+    "refresh_token": "new_xyz789...",
+    "token_type": "bearer",
+    "expires_in": 604800
+  }
+  ```
+- **프로세스**:
+  1. 클라이언트가 저장된 refresh_token 전송
+  2. 백엔드가 DB에서 refresh_token 검증 (유효성, 만료, 폐기 여부)
+  3. 새로운 access_token + refresh_token 발급
+  4. 기존 refresh_token은 자동 폐기 (revoked)
+- **에러**:
+  - 401: refresh_token이 유효하지 않거나 만료됨 → 재로그인 필요
 
 ---
 
