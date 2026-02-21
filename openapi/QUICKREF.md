@@ -14,8 +14,9 @@ python generate_openapi.py
 ## 📊 API 엔드포인트 목록
 
 ### Authentication (`/api/v1/auth`)
-- `GET  /spotify/login` - Spotify 로그인 URL 획득
-- `POST /spotify/callback` - OAuth callback 처리 및 JWT 발급
+- `POST /spotify/verify` - ⭐ Spotify 토큰 검증 및 JWT 발급 (권장)
+- `GET  /spotify/login` - ⚠️ Spotify 로그인 URL 획득 (Deprecated)
+- `POST /spotify/callback` - ⚠️ OAuth callback 처리 및 JWT 발급 (Deprecated)
 - `GET  /me` - 현재 사용자 정보 조회 🔒
 - `POST /refresh` - JWT 토큰 갱신 🔒
 

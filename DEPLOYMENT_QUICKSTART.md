@@ -60,6 +60,7 @@ nano .env
 POSTGRES_PASSWORD=your_secure_password
 SPOTIFY_CLIENT_ID=your_client_id
 SPOTIFY_CLIENT_SECRET=your_client_secret
+# SPOTIFY_REDIRECT_URI: 레거시 callback 지원용 (클라이언트 PKCE 사용 시 선택적)
 SPOTIFY_REDIRECT_URI=http://YOUR_EC2_IP/api/v1/auth/spotify/callback
 JWT_SECRET_KEY=$(openssl rand -hex 32)  # Generate this
 ALLOWED_ORIGINS=http://your-frontend-domain.com

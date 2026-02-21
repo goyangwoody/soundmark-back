@@ -63,20 +63,6 @@ components:
       - follower_count
       title: FollowResponse
       type: object
-    FollowStats:
-      description: User follow statistics
-      properties:
-        follower_count:
-          title: Follower Count
-          type: integer
-        following_count:
-          title: Following Count
-          type: integer
-      required:
-      - follower_count
-      - following_count
-      title: FollowStats
-      type: object
     FollowersResponse:
       description: Response for followers list
       properties:
@@ -382,6 +368,24 @@ components:
       - authorization_url
       title: SpotifyLoginResponse
       type: object
+    SpotifyVerifyRequest:
+      description: Request model for Spotify token verification
+      properties:
+        expires_in:
+          default: 3600
+          title: Expires In
+          type: integer
+        spotify_access_token:
+          title: Spotify Access Token
+          type: string
+        spotify_refresh_token:
+          title: Spotify Refresh Token
+          type: string
+      required:
+      - spotify_access_token
+      - spotify_refresh_token
+      title: SpotifyVerifyRequest
+      type: object
     TokenResponse:
       description: Response model for authentication token
       properties:
@@ -496,7 +500,7 @@ components:
       title: UserResponse
       type: object
     UserWithStats:
-      description: User with follow statistics
+      description: User with follow statistics and recommendation feed
       properties:
         created_at:
           format: date-time
@@ -529,6 +533,15 @@ components:
           default: false
           title: Is Following
           type: boolean
+        recommendation_count:
+          default: 0
+          title: Recommendation Count
+          type: integer
+        recommendations:
+          default: []
+          items: {}
+          title: Recommendations
+          type: array
         spotify_id:
           title: Spotify Id
           type: string
@@ -623,10 +636,13 @@ paths:
       - Authentication
   /api/v1/auth/spotify/callback:
     post:
-      description: "Handle Spotify OAuth callback\n\nExchange authorization code for\
-        \ tokens, create or update user,\nand return our service JWT token\n\nArgs:\n\
-        \    code: Authorization code from Spotify OAuth\n    db: Database session\n\
-        \    \nReturns:\n    JWT access token for our service"
+      deprecated: true
+      description: "Handle Spotify OAuth callback\n\n**DEPRECATED**: Clients should\
+        \ handle Spotify OAuth directly with PKCE.\nUse /spotify/verify endpoint instead.\n\
+        \nExchange authorization code for tokens, create or update user,\nand return\
+        \ our service JWT token\n\nArgs:\n    code: Authorization code from Spotify\
+        \ OAuth\n    db: Database session\n    \nReturns:\n    JWT access token for\
+        \ our service"
       operationId: spotify_callback_api_v1_auth_spotify_callback_post
       parameters:
       - description: Authorization code from Spotify
@@ -655,8 +671,11 @@ paths:
       - Authentication
   /api/v1/auth/spotify/login:
     get:
-      description: "Get Spotify authorization URL for user to login\n\nReturns:\n\
-        \    URL to redirect user to Spotify login page"
+      deprecated: true
+      description: "Get Spotify authorization URL for user to login\n\n**DEPRECATED**:\
+        \ Clients should handle Spotify OAuth directly with PKCE.\nUse /spotify/verify\
+        \ endpoint instead.\n\nReturns:\n    URL to redirect user to Spotify login\
+        \ page"
       operationId: spotify_login_api_v1_auth_spotify_login_get
       responses:
         '200':
@@ -666,6 +685,39 @@ paths:
                 $ref: '#/components/schemas/SpotifyLoginResponse'
           description: Successful Response
       summary: Spotify Login
+      tags:
+      - Authentication
+  /api/v1/auth/spotify/verify:
+    post:
+      description: "Verify Spotify access token and issue JWT\n\nClient handles Spotify\
+        \ OAuth (with PKCE) and sends tokens to backend.\nBackend verifies the token,\
+        \ creates/updates user, and issues JWT.\n\n**Flow**:\n1. Client: Spotify OAuth\
+        \ with PKCE\n2. Client: Receives access_token + refresh_token from Spotify\n\
+        3. Client → Backend: Send tokens to this endpoint\n4. Backend: Verify token\
+        \ and issue JWT\n\nArgs:\n    request: Spotify tokens (access_token, refresh_token,\
+        \ expires_in)\n    db: Database session\n    \nReturns:\n    JWT access token\
+        \ for our service\n    \nRaises:\n    401: If Spotify token is invalid"
+      operationId: verify_spotify_token_api_v1_auth_spotify_verify_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpotifyVerifyRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Verify Spotify Token
       tags:
       - Authentication
   /api/v1/map/nearby:
@@ -906,6 +958,23 @@ paths:
       summary: Add Recommendation Reaction
       tags:
       - Recommendations
+  /api/v1/users/me:
+    get:
+      description: "Get current user's profile with statistics\n\nReturns:\n    Current\
+        \ user profile with follower/following counts and recommendation count"
+      operationId: get_my_profile_api_v1_users_me_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWithStats'
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: Get My Profile
+      tags:
+      - Users & Follow
   /api/v1/users/{user_id}:
     get:
       description: "Get user profile with follow statistics\n\nArgs:\n    user_id:\
@@ -1090,34 +1159,6 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
       summary: Get User Following
-      tags:
-      - Users & Follow
-  /api/v1/users/{user_id}/stats:
-    get:
-      description: "Get user's follow statistics\n\nArgs:\n    user_id: ID of the\
-        \ user\n\nReturns:\n    Follower and following counts"
-      operationId: get_user_follow_stats_api_v1_users__user_id__stats_get
-      parameters:
-      - in: path
-        name: user_id
-        required: true
-        schema:
-          title: User Id
-          type: integer
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FollowStats'
-          description: Successful Response
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      summary: Get User Follow Stats
       tags:
       - Users & Follow
   /health:

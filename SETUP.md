@@ -14,8 +14,10 @@
 3. Fill in:
    - **App name**: Soundmark (or your choice)
    - **App description**: Location-based music recommendation platform
-   - **Redirect URI**: `http://127.0.0.1:8000/api/v1/auth/spotify/callback`
-     - ⚠️ **Important**: Use `127.0.0.1` (loopback IP), NOT `localhost` (not allowed by Spotify)
+   - **Redirect URIs**: 
+     - `soundmark://callback` (for mobile app with PKCE)
+     - `http://127.0.0.1:8000/api/v1/auth/spotify/callback` (optional, for legacy backend callback)
+     - ⚠️ **Note**: 모바일 앱에서 PKCE 사용 시 커스텀 URL scheme 필요
 4. Save and copy your **Client ID** and **Client Secret**
 
 ### 3. Environment Configuration
@@ -70,7 +72,40 @@ You should see the interactive API documentation with all endpoints.
 
 ## 📝 API Testing Flow
 
-### Test Authentication Flow
+### Test Authentication Flow (Method 1: Client-side PKCE) ⭐ **권장**
+
+클라이언트가 직접 Spotify OAuth를 처리하는 방식입니다.
+
+1. **Postman/Insomnia에서 테스트**:
+   - Spotify OAuth 2.0 flow를 수동으로 진행
+   - Code verifier/challenge 생성
+   - Spotify에서 access_token + refresh_token 받기
+   
+2. **백엔드 API 호출**:
+   ```bash
+   curl -X POST "http://localhost:8000/api/v1/auth/spotify/verify" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "spotify_access_token": "BQD...",
+       "spotify_refresh_token": "AQC...",
+       "expires_in": 3600
+     }'
+   ```
+
+3. **응답에서 JWT 복사**:
+   ```json
+   {
+     "access_token": "eyJ0eXAi...",
+     "token_type": "bearer",
+     "expires_in": 604800
+   }
+   ```
+
+4. Swagger UI에서 "Authorize" 클릭 후 `Bearer <jwt_token>` 입력
+
+### Test Authentication Flow (Method 2: Backend Callback) - Deprecated
+
+백엔드가 OAuth를 처리하는 기존 방식입니다.
 
 1. Go to http://localhost:8000/docs
 2. Try `/api/v1/auth/spotify/login` endpoint

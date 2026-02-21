@@ -80,20 +80,17 @@ soundmark-back/
 
 ### 🔐 인증 (Authentication) - `/api/v1/auth`
 
-#### `GET /spotify/login`
-Spotify OAuth 로그인 URL 반환
+#### `POST /spotify/verify` ⭐ **권장**
+Spotify access token 검증 및 JWT 토큰 발급
 - **인증 필요**: ❌
-- **응답**: `SpotifyLoginResponse`
+- **요청 바디**: `SpotifyVerifyRequest`
   ```json
   {
-    "authorization_url": "https://accounts.spotify.com/authorize?..."
+    "spotify_access_token": "BQD...",
+    "spotify_refresh_token": "AQC...",
+    "expires_in": 3600
   }
   ```
-
-#### `POST /spotify/callback`
-Spotify OAuth 콜백 처리 및 JWT 토큰 발급
-- **인증 필요**: ❌
-- **파라미터**: `code` (query, Spotify authorization code)
 - **응답**: `TokenResponse`
   ```json
   {
@@ -103,11 +100,25 @@ Spotify OAuth 콜백 처리 및 JWT 토큰 발급
   }
   ```
 - **프로세스**:
-  1. Spotify에서 access token 교환
-  2. Spotify API로 사용자 프로필 조회
-  3. User 생성 또는 업데이트
-  4. OAuthAccount 저장 (Spotify tokens)
-  5. 자체 JWT 토큰 발급
+  1. 클라이언트가 Spotify OAuth를 직접 처리 (PKCE 포함)
+  2. 클라이언트가 Spotify에서 access_token + refresh_token 받음
+  3. 백엔드로 토큰 전송
+  4. 백엔드가 access_token으로 사용자 정보 조회 (검증)
+  5. User 생성 또는 업데이트
+  6. OAuthAccount에 Spotify tokens 저장
+  7. 자체 JWT 토큰 발급
+
+#### `GET /spotify/login` ⚠️ **Deprecated**
+Spotify OAuth 로그인 URL 반환
+- **인증 필요**: ❌
+- **상태**: Deprecated - 클라이언트가 Spotify OAuth를 직접 처리하도록 변경됨
+- **대체**: 클라이언트에서 직접 Spotify authorization URL 생성 (PKCE 사용)
+
+#### `POST /spotify/callback` ⚠️ **Deprecated**
+Spotify OAuth 콜백 처리 및 JWT 토큰 발급
+- **인증 필요**: ❌
+- **상태**: Deprecated - `/spotify/verify` 사용 권장
+- **대체**: 클라이언트가 Spotify에서 토큰을 받아 `/spotify/verify`로 전송
 
 #### `GET /me`
 현재 인증된 사용자 정보 조회
@@ -737,6 +748,7 @@ DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/soundmark
 # Spotify OAuth (https://developer.spotify.com/dashboard)
 SPOTIFY_CLIENT_ID=your_spotify_client_id
 SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+# SPOTIFY_REDIRECT_URI: 클라이언트 PKCE 사용 시 선택적 (레거시 callback 지원용)
 SPOTIFY_REDIRECT_URI=http://127.0.0.1:8000/api/v1/auth/spotify/callback
 
 # JWT (32자 이상 랜덤 문자열)
@@ -759,10 +771,9 @@ DEBUG=true
    - **App name**: Soundmark (또는 원하는 이름)
    - **App description**: Location-based music recommendation platform
 4. **Edit Settings** → **Redirect URIs** 추가:
-   ```
-   http://127.0.0.1:8000/api/v1/auth/spotify/callback
-   ```
-   ⚠️ **주의**: `localhost` 대신 loopback IP `127.0.0.1` 사용 필수!
+   - 클라이언트 PKCE 사용 시: `soundmark://callback` (모바일 앱용 커스텀 scheme)
+   - 레거시 백엔드 callback: `http://127.0.0.1:8000/api/v1/auth/spotify/callback` (선택적)
+   ⚠️ **주의**: 백엔드 callback 사용 시 `localhost` 대신 loopback IP `127.0.0.1` 사용 필수!
 5. **Client ID**와 **Client Secret**을 `.env` 파일에 복사
 
 ### 3. Docker Compose로 실행
@@ -1155,6 +1166,7 @@ JWT_SECRET_KEY=<Generate with: openssl rand -hex 32>
 ALLOWED_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
 SPOTIFY_CLIENT_ID=your_spotify_client_id
 SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+# SPOTIFY_REDIRECT_URI: 클라이언트 PKCE 사용 시 선택적
 SPOTIFY_REDIRECT_URI=https://yourdomain.com/api/v1/auth/spotify/callback
 ```
 
@@ -1180,17 +1192,18 @@ CREATE EXTENSION postgis;
 ```
 
 ### 2. Spotify OAuth 콜백 실패
-**문제**: `Invalid redirect URI`
+**문제**: `Invalid redirect URI` (레거시 `/spotify/callback` 사용 시)
 **해결**:
 - Spotify Dashboard에서 Redirect URI 확인
 - `http://127.0.0.1:8000/api/v1/auth/spotify/callback` 정확히 입력
 - `localhost` 대신 `127.0.0.1` 사용
+- ⭐ **권장**: 클라이언트에서 PKCE로 직접 OAuth 처리 후 `/spotify/verify` 사용
 
 ### 3. JWT 토큰 만료
 **문제**: `Could not validate credentials`
 **해결**:
 - `/api/v1/auth/refresh` 엔드포인트로 재발급
-- 또는 `/api/v1/auth/spotify/login`부터 재로그인
+- 또는 클라이언트에서 Spotify OAuth 재인증 후 `/api/v1/auth/spotify/verify` 호출
 
 ### 4. Docker 컨테이너 재시작
 ```bash
@@ -1219,7 +1232,16 @@ psql -h localhost -p 5432 -U postgres -d soundmark
 
 ### 2. API 테스트 (curl)
 ```bash
-# 로그인 URL 받기
+# 권장: Spotify 토큰으로 JWT 발급 (PKCE)
+curl -X POST http://localhost:8000/api/v1/auth/spotify/verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "spotify_access_token": "BQD...",
+    "spotify_refresh_token": "AQC...",
+    "expires_in": 3600
+  }'
+
+# 레거시: 로그인 URL 받기 (Deprecated)
 curl http://localhost:8000/api/v1/auth/spotify/login
 
 # 추천곡 조회 (인증 필요)

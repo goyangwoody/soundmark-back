@@ -147,10 +147,19 @@ object ApiClient {
 
 // AuthService.kt
 interface AuthService {
+    // 권장: 클라이언트가 Spotify OAuth 직접 처리 후 토큰 검증
+    @POST("/api/v1/auth/spotify/verify")
+    suspend fun verifySpotifyToken(
+        @Body request: SpotifyVerifyRequest
+    ): TokenResponse
+    
+    // Deprecated: 레거시 엔드포인트
     @GET("/api/v1/auth/spotify/login")
+    @Deprecated("Use client-side Spotify OAuth with PKCE instead")
     suspend fun getSpotifyLoginUrl(): SpotifyLoginResponse
     
     @POST("/api/v1/auth/spotify/callback")
+    @Deprecated("Use verifySpotifyToken instead")
     suspend fun spotifyCallback(@Query("code") code: String): TokenResponse
     
     @GET("/api/v1/auth/me")
@@ -241,13 +250,20 @@ interface UserService {
 #### Data Models
 ```kotlin
 // Models.kt
+data class SpotifyVerifyRequest(
+    val spotifyAccessToken: String,
+    val spotifyRefreshToken: String,
+    val expiresIn: Int = 3600
+)
+
 data class SpotifyLoginResponse(
     val url: String
 )
 
 data class TokenResponse(
     val accessToken: String,
-    val tokenType: String = "bearer"
+    val tokenType: String = "bearer",
+    val expiresIn: Int
 )
 
 data class UserResponse(
@@ -479,7 +495,141 @@ class UserViewModel : ViewModel() {
 
 ## 🔐 Authentication Flow
 
-### 1. Spotify 로그인
+### 방법 1: 클라이언트 직접 Spotify OAuth (PKCE) ⭐ **권장**
+
+클라이언트가 Spotify OAuth를 직접 처리합니다. 더 안전하고 최신 방식입니다.
+
+#### Android 예시 (Spotify Android SDK 또는 수동 구현)
+
+```kotlin
+// build.gradle.kts에 추가
+dependencies {
+    implementation("com.spotify.android:auth:2.1.1") // Spotify Auth Library
+}
+
+// 1. PKCE Code Verifier 및 Challenge 생성
+import java.security.MessageDigest
+import java.security.SecureRandom
+import android.util.Base64
+
+fun generateCodeVerifier(): String {
+    val secureRandom = SecureRandom()
+    val code = ByteArray(32)
+    secureRandom.nextBytes(code)
+    return Base64.encodeToString(code, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+}
+
+fun generateCodeChallenge(verifier: String): String {
+    val bytes = verifier.toByteArray(Charsets.US_ASCII)
+    val messageDigest = MessageDigest.getInstance("SHA-256")
+    val digest = messageDigest.digest(bytes)
+    return Base64.encodeToString(digest, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+}
+
+// 2. Spotify 로그인 시작
+fun startSpotifyLogin(activity: Activity) {
+    val clientId = "YOUR_SPOTIFY_CLIENT_ID"
+    val redirectUri = "soundmark://callback"
+    
+    // Code verifier 생성 및 저장
+    val codeVerifier = generateCodeVerifier()
+    saveCodeVerifier(codeVerifier) // SharedPreferences에 임시 저장
+    
+    val codeChallenge = generateCodeChallenge(codeVerifier)
+    
+    // Spotify authorization URL 생성
+    val scopes = "user-read-email user-read-private"
+    val authUrl = "https://accounts.spotify.com/authorize?" +
+            "client_id=$clientId&" +
+            "response_type=code&" +
+            "redirect_uri=${Uri.encode(redirectUri)}&" +
+            "code_challenge_method=S256&" +
+            "code_challenge=$codeChallenge&" +
+            "scope=${Uri.encode(scopes)}"
+    
+    // Chrome Custom Tab으로 열기
+    val intent = CustomTabsIntent.Builder().build()
+    intent.launchUrl(activity, Uri.parse(authUrl))
+}
+
+// 3. Deep Link Callback 처리
+// AndroidManifest.xml에 intent-filter 추가 필요
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    
+    val uri = intent?.data
+    if (uri != null && uri.scheme == "soundmark" && uri.host == "callback") {
+        val code = uri.getQueryParameter("code")
+        if (code != null) {
+            exchangeCodeForToken(code)
+        }
+    }
+}
+
+// 4. Authorization Code를 Spotify Token으로 교환
+suspend fun exchangeCodeForToken(code: String) {
+    val codeVerifier = getCodeVerifier() // SharedPreferences에서 가져오기
+    
+    try {
+        // Spotify token endpoint 직접 호출
+        val response = makeSpotifyTokenRequest(code, codeVerifier)
+        
+        val spotifyAccessToken = response.getString("access_token")
+        val spotifyRefreshToken = response.getString("refresh_token")
+        val expiresIn = response.getInt("expires_in")
+        
+        // 5. 백엔드에 토큰 전송 및 JWT 받기
+        val verifyRequest = SpotifyVerifyRequest(
+            spotifyAccessToken = spotifyAccessToken,
+            spotifyRefreshToken = spotifyRefreshToken,
+            expiresIn = expiresIn
+        )
+        
+        val tokenResponse = ApiClient.authService.verifySpotifyToken(verifyRequest)
+        val jwtToken = tokenResponse.accessToken
+        
+        // 6. JWT 저장
+        saveJwtToken(jwtToken)
+        
+        // Code verifier 삭제
+        clearCodeVerifier()
+        
+        // 메인 화면으로 이동
+        navigateToMain()
+        
+    } catch (e: Exception) {
+        Log.e("Auth", "Login failed", e)
+        showError("로그인 실패")
+    }
+}
+
+// Spotify token endpoint 호출 헬퍼
+suspend fun makeSpotifyTokenRequest(code: String, codeVerifier: String): JSONObject {
+    val client = OkHttpClient()
+    val requestBody = FormBody.Builder()
+        .add("grant_type", "authorization_code")
+        .add("code", code)
+        .add("redirect_uri", "soundmark://callback")
+        .add("client_id", "YOUR_SPOTIFY_CLIENT_ID")
+        .add("code_verifier", codeVerifier)
+        .build()
+    
+    val request = Request.Builder()
+        .url("https://accounts.spotify.com/api/token")
+        .post(requestBody)
+        .build()
+    
+    return withContext(Dispatchers.IO) {
+        val response = client.newCall(request).execute()
+        JSONObject(response.body!!.string())
+    }
+}
+```
+
+### 방법 2: 백엔드 Callback 방식 (Deprecated)
+
+기존 방식으로, 백엔드가 code를 token으로 교환합니다.
+
 ```kotlin
 // 1. Spotify 로그인 URL 가져오기
 val response = ApiClient.authService.getSpotifyLoginUrl()
@@ -496,7 +646,7 @@ startActivity(intent)
 val tokenResponse = ApiClient.authService.spotifyCallback(code)
 val jwtToken = tokenResponse.accessToken
 
-// 5. JWT 저장 (SharedPreferences, DataStore 등)
+// 5. JWT 저장
 saveToken(jwtToken)
 ```
 

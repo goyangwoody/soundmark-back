@@ -173,6 +173,7 @@ POSTGRES_PASSWORD=your_secure_database_password_here
 # Spotify (from Spotify Developer Dashboard)
 SPOTIFY_CLIENT_ID=your_spotify_client_id
 SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+# SPOTIFY_REDIRECT_URI: 선택적 (클라이언트가 PKCE 사용 시 불필요, 레거시 callback용)
 SPOTIFY_REDIRECT_URI=http://YOUR_EC2_PUBLIC_IP/api/v1/auth/spotify/callback
 
 # JWT (generate: openssl rand -hex 32)
@@ -188,7 +189,7 @@ DEBUG=false
 **Important:**
 - Update `DATABASE_URL` with the same password you set in `POSTGRES_PASSWORD`
 - Generate a strong JWT secret key
-- Update `SPOTIFY_REDIRECT_URI` with your actual domain
+- `SPOTIFY_REDIRECT_URI`: 클라이언트가 PKCE를 사용하는 경우 선택적 (deprecated `/spotify/callback` 엔드포인트용)
 - Set `DEBUG=false` for production
 
 Save and exit (Ctrl+X, then Y, then Enter).
