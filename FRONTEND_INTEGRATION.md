@@ -143,6 +143,10 @@ object ApiClient {
     val mapService: MapService by lazy {
         retrofit.create(MapService::class.java)
     }
+    
+    val trackService: TrackService by lazy {
+        retrofit.create(TrackService::class.java)
+    }
 }
 
 // AuthService.kt
@@ -219,6 +223,11 @@ interface UserService {
         @Body request: UserUpdateRequest
     ): UserPublic
 
+    @GET("/api/v1/users/me/recently-played")
+    suspend fun getMyRecentlyPlayed(
+        @Header("Authorization") token: String
+    ): RecentlyPlayedResponse
+
     @GET("/api/v1/users/{user_id}")
     suspend fun getUserProfile(
         @Path("user_id") userId: Int,
@@ -250,6 +259,12 @@ interface UserService {
         @Query("limit") limit: Int = 50,
         @Query("offset") offset: Int = 0
     ): FollowingResponse
+}
+
+// TrackService.kt
+interface TrackService {
+    @GET("/api/v1/tracks/popular")
+    suspend fun getPopularTracks(): PopularTracksResponse
 }
 ```
 
@@ -392,6 +407,34 @@ data class FollowersResponse(
 
 data class FollowingResponse(
     val following: List<UserPublic>,
+    val total: Int
+)
+
+data class RecentlyPlayedTrack(
+    val spotifyTrackId: String,
+    val title: String,
+    val artist: String,
+    val album: String,
+    val albumCoverUrl: String?,
+    val trackUrl: String,
+    val previewUrl: String?,
+    val playedAt: String
+)
+
+data class RecentlyPlayedResponse(
+    val tracks: List<RecentlyPlayedTrack>,
+    val total: Int
+)
+
+data class PopularTrackItem(
+    val spotifyTrackId: String,
+    val title: String,
+    val artist: String,
+    val recommendationCount: Int
+)
+
+data class PopularTracksResponse(
+    val tracks: List<PopularTrackItem>,
     val total: Int
 )
 ```
@@ -562,7 +605,7 @@ fun startSpotifyLogin(activity: Activity) {
     val codeChallenge = generateCodeChallenge(codeVerifier)
     
     // Spotify authorization URL 생성
-    val scopes = "user-read-email user-read-private"
+    val scopes = "user-read-email user-read-private user-read-recently-played"
     val authUrl = "https://accounts.spotify.com/authorize?" +
             "client_id=$clientId&" +
             "response_type=code&" +

@@ -95,6 +95,62 @@ components:
       - place_name
       title: PlaceInput
       type: object
+    RecentlyPlayedTrack:
+      description: Recently played track from Spotify
+      properties:
+        album:
+          title: Album
+          type: string
+        album_cover_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Album Cover Url
+        artist:
+          title: Artist
+          type: string
+        played_at:
+          title: Played At
+          type: string
+        preview_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Preview Url
+        spotify_track_id:
+          title: Spotify Track Id
+          type: string
+        title:
+          title: Title
+          type: string
+        track_url:
+          title: Track Url
+          type: string
+      required:
+      - spotify_track_id
+      - title
+      - artist
+      - album
+      - track_url
+      - played_at
+      title: RecentlyPlayedTrack
+      type: object
+    RecentlyPlayedResponse:
+      description: Response for recently played tracks
+      properties:
+        total:
+          title: Total
+          type: integer
+        tracks:
+          items:
+            $ref: '#/components/schemas/RecentlyPlayedTrack'
+          title: Tracks
+          type: array
+      required:
+      - tracks
+      - total
+      title: RecentlyPlayedResponse
+      type: object
     RecommendationCreateRequest:
       description: Request model for creating a recommendation
       properties:
@@ -1037,6 +1093,32 @@ paths:
       security:
       - HTTPBearer: []
       summary: Update My Profile
+      tags:
+      - Users & Follow
+  /api/v1/users/me/recently-played:
+    get:
+      description: "Get current user's 3 most recently played tracks from Spotify\n\
+        \nRequires the user to have a linked Spotify account with a valid access\
+        \ token.\nThe Spotify access token must have the `user-read-recently-played`\
+        \ scope.\n\nReturns:\n    List of 3 most recently played tracks with metadata\
+        \ and played_at timestamp"
+      operationId: get_my_recently_played_api_v1_users_me_recently_played_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecentlyPlayedResponse'
+          description: Successful Response
+        '401':
+          description: Spotify token expired or invalid
+        '404':
+          description: Spotify account not linked
+        '502':
+          description: Failed to fetch from Spotify API
+      security:
+      - HTTPBearer: []
+      summary: Get My Recently Played
       tags:
       - Users & Follow
   /api/v1/users/{user_id}:

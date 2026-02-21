@@ -31,7 +31,7 @@ class SpotifyService:
             client_id=self.client_id,
             client_secret=self.client_secret,
             redirect_uri=self.redirect_uri,
-            scope="user-read-email user-read-private",
+            scope="user-read-email user-read-private user-read-recently-played",
             show_dialog=True
         )
     
@@ -173,6 +173,40 @@ class SpotifyService:
             ]
         except Exception as e:
             logger.error(f"Failed to search tracks: {str(e)}")
+            return []
+
+
+    def get_recently_played(self, access_token: str, limit: int = 3) -> list[Dict[str, Any]]:
+        """
+        Get user's recently played tracks from Spotify
+        
+        Args:
+            access_token: Valid Spotify access token (requires user-read-recently-played scope)
+            limit: Maximum number of recently played tracks to return (default: 3)
+            
+        Returns:
+            List of recently played track dicts with track metadata and played_at
+        """
+        try:
+            sp = spotipy.Spotify(auth=access_token)
+            results = sp.current_user_recently_played(limit=limit)
+            items = results.get("items", [])
+            
+            return [
+                {
+                    "spotify_track_id": item["track"]["id"],
+                    "title": item["track"]["name"],
+                    "artist": ", ".join([artist["name"] for artist in item["track"]["artists"]]),
+                    "album": item["track"]["album"]["name"],
+                    "album_cover_url": item["track"]["album"]["images"][0]["url"] if item["track"]["album"]["images"] else None,
+                    "track_url": item["track"]["external_urls"]["spotify"],
+                    "preview_url": item["track"].get("preview_url"),
+                    "played_at": item["played_at"],
+                }
+                for item in items
+            ]
+        except Exception as e:
+            logger.error(f"Failed to get recently played tracks: {str(e)}")
             return []
 
 

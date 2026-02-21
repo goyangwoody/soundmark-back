@@ -32,6 +32,7 @@ python generate_openapi.py
 ### Users & Follow (`/api/v1/users`)
 - `GET  /me` - 내 프로필 조회 (추천 피드 포함) 🔒
 - `PATCH /me` - 내 프로필 수정 (표시이름/프로필사진/상태메시지) 🔒
+- `GET  /me/recently-played` - Spotify 최근 재생 기록 3곡 조회 🔒
 - `GET  /{user_id}` - 사용자 프로필 및 팔로우 통계 조회 (추천 피드 포함)
 - `POST /{user_id}/follow` - 사용자 팔로우 🔒
 - `DELETE /{user_id}/follow` - 사용자 언팔로우 🔒

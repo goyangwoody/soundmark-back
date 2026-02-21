@@ -595,6 +595,42 @@
         ]
       }
     },
+    "/api/v1/users/me/recently-played": {
+      "get": {
+        "tags": [
+          "Users & Follow"
+        ],
+        "summary": "Get My Recently Played",
+        "description": "Get current user's 3 most recently played tracks from Spotify\n\nRequires the user to have a linked Spotify account with a valid access token.\nThe Spotify access token must have the `user-read-recently-played` scope.\n\nReturns:\n    List of 3 most recently played tracks with metadata and played_at timestamp",
+        "operationId": "get_my_recently_played_api_v1_users_me_recently_played_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecentlyPlayedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Spotify token expired or invalid"
+          },
+          "404": {
+            "description": "Spotify account not linked"
+          },
+          "502": {
+            "description": "Failed to fetch from Spotify API"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/users/{user_id}": {
       "get": {
         "tags": [
@@ -1049,6 +1085,81 @@
         ],
         "title": "PlaceInput",
         "description": "Place information input (Google or manual)"
+      },
+      "RecentlyPlayedTrack": {
+        "properties": {
+          "spotify_track_id": {
+            "type": "string",
+            "title": "Spotify Track Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "album": {
+            "type": "string",
+            "title": "Album"
+          },
+          "album_cover_url": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ],
+            "title": "Album Cover Url"
+          },
+          "track_url": {
+            "type": "string",
+            "title": "Track Url"
+          },
+          "preview_url": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ],
+            "title": "Preview Url"
+          },
+          "played_at": {
+            "type": "string",
+            "title": "Played At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "spotify_track_id",
+          "title",
+          "artist",
+          "album",
+          "track_url",
+          "played_at"
+        ],
+        "title": "RecentlyPlayedTrack",
+        "description": "Recently played track from Spotify"
+      },
+      "RecentlyPlayedResponse": {
+        "properties": {
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/RecentlyPlayedTrack"
+            },
+            "type": "array",
+            "title": "Tracks"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tracks",
+          "total"
+        ],
+        "title": "RecentlyPlayedResponse",
+        "description": "Response for recently played tracks"
       },
       "RecommendationCreateRequest": {
         "properties": {
