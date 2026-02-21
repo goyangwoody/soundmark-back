@@ -431,13 +431,49 @@ components:
         id:
           title: Id
           type: integer
+        profile_image:
+          default: 1
+          title: Profile Image
+          type: integer
         spotify_id:
           title: Spotify Id
+          type: string
+        status_message:
+          default: ''
+          maxLength: 20
+          title: Status Message
           type: string
       required:
       - id
       - spotify_id
       title: UserPublic
+      type: object
+    UserUpdateRequest:
+      description: Request model for updating user profile
+      properties:
+        display_name:
+          anyOf:
+          - maxLength: 255
+            type: string
+          - type: 'null'
+          description: Display name
+          title: Display Name
+        profile_image:
+          anyOf:
+          - maximum: 9
+            minimum: 1
+            type: integer
+          - type: 'null'
+          description: Profile image number (1-9)
+          title: Profile Image
+        status_message:
+          anyOf:
+          - maxLength: 20
+            type: string
+          - type: 'null'
+          description: Status message (max 20 chars)
+          title: Status Message
+      title: UserUpdateRequest
       type: object
     UserResponse:
       description: Response model for user information
@@ -459,8 +495,17 @@ components:
         id:
           title: Id
           type: integer
+        profile_image:
+          default: 1
+          title: Profile Image
+          type: integer
         spotify_id:
           title: Spotify Id
+          type: string
+        status_message:
+          default: ''
+          maxLength: 20
+          title: Status Message
           type: string
       required:
       - id
@@ -485,6 +530,15 @@ components:
           - type: string
           - type: 'null'
           title: Email
+        profile_image:
+          default: 1
+          title: Profile Image
+          type: integer
+        status_message:
+          default: ''
+          maxLength: 20
+          title: Status Message
+          type: string
         follower_count:
           title: Follower Count
           type: integer
@@ -954,6 +1008,35 @@ paths:
       security:
       - HTTPBearer: []
       summary: Get My Profile
+      tags:
+      - Users & Follow
+    patch:
+      description: "Update current user's profile\n\nOnly provided (non-null) fields\
+        \ will be updated.\n\nArgs:\n    request: Fields to update (display_name,\
+        \ profile_image, status_message)\n\nReturns:\n    Updated user profile"
+      operationId: update_my_profile_api_v1_users_me_patch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublic'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Update My Profile
       tags:
       - Users & Follow
   /api/v1/users/{user_id}:

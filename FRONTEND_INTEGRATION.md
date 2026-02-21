@@ -213,6 +213,12 @@ interface UserService {
         @Header("Authorization") token: String
     ): UserWithStatsResponse
 
+    @PATCH("/api/v1/users/me")
+    suspend fun updateMyProfile(
+        @Header("Authorization") token: String,
+        @Body request: UserUpdateRequest
+    ): UserPublic
+
     @GET("/api/v1/users/{user_id}")
     suspend fun getUserProfile(
         @Path("user_id") userId: Int,
@@ -271,11 +277,19 @@ data class RefreshTokenRequest(
     val refreshToken: String
 )
 
+data class UserUpdateRequest(
+    val displayName: String? = null,
+    val profileImage: Int? = null,
+    val statusMessage: String? = null
+)
+
 data class UserResponse(
     val id: Int,
     val spotifyId: String,
     val displayName: String?,
     val email: String?,
+    val profileImage: Int = 1,
+    val statusMessage: String = "",
     val createdAt: String
 )
 
@@ -336,6 +350,8 @@ data class UserWithStatsResponse(
     val spotifyId: String,
     val displayName: String?,
     val email: String?,
+    val profileImage: Int = 1,
+    val statusMessage: String = "",
     val createdAt: String,
     val followerCount: Int,
     val followingCount: Int,
@@ -364,7 +380,9 @@ data class FollowResponse(
 data class UserPublic(
     val id: Int,
     val spotifyId: String,
-    val displayName: String?
+    val displayName: String?,
+    val profileImage: Int = 1,
+    val statusMessage: String = ""
 )
 
 data class FollowersResponse(

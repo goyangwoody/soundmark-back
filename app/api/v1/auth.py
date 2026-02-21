@@ -2,6 +2,7 @@
 Authentication API routes
 """
 import logging
+import random
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -133,7 +134,9 @@ async def spotify_callback(
         user = User(
             spotify_id=spotify_id,
             display_name=user_profile.get("display_name"),
-            email=user_profile.get("email")
+            email=user_profile.get("email"),
+            profile_image=random.randint(1, 9),
+            status_message=""
         )
         db.add(user)
         await db.flush()  # Flush to get user.id
@@ -250,7 +253,9 @@ async def verify_spotify_token(
         user = User(
             spotify_id=spotify_id,
             display_name=user_profile.get("display_name"),
-            email=user_profile.get("email")
+            email=user_profile.get("email"),
+            profile_image=random.randint(1, 9),
+            status_message=""
         )
         db.add(user)
         await db.flush()  # Flush to get user.id

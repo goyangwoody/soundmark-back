@@ -5,27 +5,27 @@
 -- ========================================
 -- 1. Users (20 users)
 -- ========================================
-INSERT INTO users (spotify_id, display_name, email, created_at, updated_at) VALUES
-('spotify_user_minsu',    '김민수',   'minsu.kim@example.com',     NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days'),
-('spotify_user_jieun',    '이지은',   'jieun.lee@example.com',     NOW() - INTERVAL '58 days', NOW() - INTERVAL '58 days'),
-('spotify_user_junho',    '박준호',   'junho.park@example.com',    NOW() - INTERVAL '55 days', NOW() - INTERVAL '55 days'),
-('spotify_user_seoyeon',  '최서연',   'seoyeon.choi@example.com',  NOW() - INTERVAL '52 days', NOW() - INTERVAL '52 days'),
-('spotify_user_woojin',   '정우진',   'woojin.jung@example.com',   NOW() - INTERVAL '50 days', NOW() - INTERVAL '50 days'),
-('spotify_user_hyejin',   '강혜진',   'hyejin.kang@example.com',   NOW() - INTERVAL '48 days', NOW() - INTERVAL '48 days'),
-('spotify_user_donghyun', '윤동현',   'donghyun.yoon@example.com', NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days'),
-('spotify_user_sohee',    '한소희',   'sohee.han@example.com',     NOW() - INTERVAL '42 days', NOW() - INTERVAL '42 days'),
-('spotify_user_taehyung', '임태형',   'taehyung.lim@example.com',  NOW() - INTERVAL '40 days', NOW() - INTERVAL '40 days'),
-('spotify_user_yuna',     '서유나',   'yuna.seo@example.com',      NOW() - INTERVAL '38 days', NOW() - INTERVAL '38 days'),
-('spotify_user_jiho',     '오지호',   'jiho.oh@example.com',       NOW() - INTERVAL '35 days', NOW() - INTERVAL '35 days'),
-('spotify_user_eunji',    '배은지',   'eunji.bae@example.com',     NOW() - INTERVAL '32 days', NOW() - INTERVAL '32 days'),
-('spotify_user_minjae',   '송민재',   'minjae.song@example.com',   NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days'),
-('spotify_user_nayeon',   '홍나연',   'nayeon.hong@example.com',   NOW() - INTERVAL '28 days', NOW() - INTERVAL '28 days'),
-('spotify_user_siwoo',    '조시우',   'siwoo.cho@example.com',     NOW() - INTERVAL '25 days', NOW() - INTERVAL '25 days'),
-('spotify_user_hayoung',  '문하영',   'hayoung.moon@example.com',  NOW() - INTERVAL '22 days', NOW() - INTERVAL '22 days'),
-('spotify_user_doyoon',   '신도윤',   'doyoon.shin@example.com',   NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days'),
-('spotify_user_chaewon',  '안채원',   'chaewon.ahn@example.com',   NOW() - INTERVAL '18 days', NOW() - INTERVAL '18 days'),
-('spotify_user_hyunwoo',  '류현우',   'hyunwoo.ryu@example.com',   NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days'),
-('spotify_user_minji',    '장민지',   'minji.jang@example.com',    NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days')
+INSERT INTO users (spotify_id, display_name, email, profile_image, status_message, created_at, updated_at) VALUES
+('spotify_user_minsu',    '김민수',   'minsu.kim@example.com',     3, '',  NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days'),
+('spotify_user_jieun',    '이지은',   'jieun.lee@example.com',     7, '',  NOW() - INTERVAL '58 days', NOW() - INTERVAL '58 days'),
+('spotify_user_junho',    '박준호',   'junho.park@example.com',    1, '',  NOW() - INTERVAL '55 days', NOW() - INTERVAL '55 days'),
+('spotify_user_seoyeon',  '최서연',   'seoyeon.choi@example.com',  5, '',  NOW() - INTERVAL '52 days', NOW() - INTERVAL '52 days'),
+('spotify_user_woojin',   '정우진',   'woojin.jung@example.com',   9, '',  NOW() - INTERVAL '50 days', NOW() - INTERVAL '50 days'),
+('spotify_user_hyejin',   '강혜진',   'hyejin.kang@example.com',   2, '',  NOW() - INTERVAL '48 days', NOW() - INTERVAL '48 days'),
+('spotify_user_donghyun', '윤동현',   'donghyun.yoon@example.com', 6, '',  NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days'),
+('spotify_user_sohee',    '한소희',   'sohee.han@example.com',     4, '',  NOW() - INTERVAL '42 days', NOW() - INTERVAL '42 days'),
+('spotify_user_taehyung', '임태형',   'taehyung.lim@example.com',  8, '',  NOW() - INTERVAL '40 days', NOW() - INTERVAL '40 days'),
+('spotify_user_yuna',     '서유나',   'yuna.seo@example.com',      1, '',  NOW() - INTERVAL '38 days', NOW() - INTERVAL '38 days'),
+('spotify_user_jiho',     '오지호',   'jiho.oh@example.com',       3, '',  NOW() - INTERVAL '35 days', NOW() - INTERVAL '35 days'),
+('spotify_user_eunji',    '배은지',   'eunji.bae@example.com',     7, '',  NOW() - INTERVAL '32 days', NOW() - INTERVAL '32 days'),
+('spotify_user_minjae',   '송민재',   'minjae.song@example.com',   5, '',  NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days'),
+('spotify_user_nayeon',   '홍나연',   'nayeon.hong@example.com',   9, '',  NOW() - INTERVAL '28 days', NOW() - INTERVAL '28 days'),
+('spotify_user_siwoo',    '조시우',   'siwoo.cho@example.com',     2, '',  NOW() - INTERVAL '25 days', NOW() - INTERVAL '25 days'),
+('spotify_user_hayoung',  '문하영',   'hayoung.moon@example.com',  6, '',  NOW() - INTERVAL '22 days', NOW() - INTERVAL '22 days'),
+('spotify_user_doyoon',   '신도윤',   'doyoon.shin@example.com',   4, '',  NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days'),
+('spotify_user_chaewon',  '안채원',   'chaewon.ahn@example.com',   8, '',  NOW() - INTERVAL '18 days', NOW() - INTERVAL '18 days'),
+('spotify_user_hyunwoo',  '류현우',   'hyunwoo.ryu@example.com',   1, '',  NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days'),
+('spotify_user_minji',    '장민지',   'minji.jang@example.com',    3, '',  NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days')
 ON CONFLICT (spotify_id) DO NOTHING;
 
 -- ========================================

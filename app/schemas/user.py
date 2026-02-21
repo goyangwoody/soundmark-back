@@ -3,7 +3,7 @@ User and Follow related Pydantic schemas
 """
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 
 if TYPE_CHECKING:
@@ -22,6 +22,8 @@ class UserPublic(BaseModel):
     id: int
     spotify_id: str
     display_name: Optional[str] = None
+    profile_image: int = 1
+    status_message: str = ""
     
     class Config:
         from_attributes = True
@@ -50,6 +52,13 @@ class UserWithStats(UserDetail):
     is_following: bool = False  # Whether current user is following this user
     is_followed_by: bool = False  # Whether this user is following current user
     recommendations: list = []  # List of RecommendationSummary
+
+
+class UserUpdateRequest(BaseModel):
+    """Request model for updating user profile"""
+    display_name: Optional[str] = Field(None, max_length=255, description="Display name")
+    profile_image: Optional[int] = Field(None, ge=1, le=9, description="Profile image number (1-9)")
+    status_message: Optional[str] = Field(None, max_length=20, description="Status message (max 20 chars)")
 
 
 class FollowResponse(BaseModel):

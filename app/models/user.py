@@ -1,8 +1,9 @@
 """
 User model - stores Spotify user information
 """
+import random
 from datetime import datetime
-from sqlalchemy import String, DateTime
+from sqlalchemy import String, Integer, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 
@@ -16,6 +17,8 @@ class User(Base):
     spotify_id: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     display_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    profile_image: Mapped[int] = mapped_column(Integer, default=lambda: random.randint(1, 9), nullable=False)
+    status_message: Mapped[str] = mapped_column(String(20), default="", server_default="", nullable=False)
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

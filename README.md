@@ -130,6 +130,8 @@ Spotify OAuth 콜백 처리 및 JWT 토큰 발급
     "spotify_id": "spotify:user:xxxxx",
     "display_name": "홍길동",
     "email": "user@example.com",
+    "profile_image": 3,
+    "status_message": "",
     "created_at": "2026-02-20T10:00:00"
   }
   ```
@@ -340,6 +342,8 @@ JWT 토큰 갱신 (Refresh Token 사용)
     "spotify_id": "spotify:user:xxxxx",
     "display_name": "홍길동",
     "email": "user@example.com",
+    "profile_image": 5,
+    "status_message": "음악이 좋아요",
     "created_at": "2026-02-20T10:00:00",
     "follower_count": 42,
     "following_count": 15,
@@ -370,6 +374,8 @@ JWT 토큰 갱신 (Refresh Token 사용)
     "spotify_id": "spotify:user:xxxxx",
     "display_name": "홍길동",
     "email": "user@example.com",
+    "profile_image": 5,
+    "status_message": "음악이 좋아요",
     "created_at": "2026-02-20T10:00:00",
     "follower_count": 42,
     "following_count": 15,
@@ -390,6 +396,31 @@ JWT 토큰 갱신 (Refresh Token 사용)
   }
   ```
 - **로직**: 인증된 경우 `is_following`, `is_followed_by` 관계 정보 포함
+
+#### `PATCH /users/me`
+내 프로필 수정 (표시이름, 프로필사진, 상태메시지)
+- **인증 필요**: ✅
+- **요청 바디**: `UserUpdateRequest` (제공된 필드만 수정)
+  ```json
+  {
+    "display_name": "새 이름",
+    "profile_image": 7,
+    "status_message": "음악이 좋아요"
+  }
+  ```
+- **응답**: `UserPublic`
+  ```json
+  {
+    "id": 1,
+    "spotify_id": "spotify:user:xxxxx",
+    "display_name": "새 이름",
+    "profile_image": 7,
+    "status_message": "음악이 좋아요"
+  }
+  ```
+- **에러**:
+  - `400 BAD_REQUEST`: 수정할 필드 없음
+  - `422 VALIDATION_ERROR`: `profile_image`가 1~9 범위 밖 / `status_message`가 20자 초과
 
 #### `POST /users/{user_id}/follow`
 사용자 팔로우
@@ -481,6 +512,8 @@ users ─┬─ oauth_accounts
 | `spotify_id` | VARCHAR(255) UNIQUE | Spotify 사용자 ID |
 | `display_name` | VARCHAR(255) | 표시 이름 |
 | `email` | VARCHAR(255) | 이메일 |
+| `profile_image` | INTEGER NOT NULL | 프로필 이미지 번호 (1~9, 가입 시 랜덤 지정) |
+| `status_message` | VARCHAR(20) NOT NULL | 상태 메시지 (기본값: 빈 문자열) |
 | `created_at` | TIMESTAMP | 생성 시각 |
 | `updated_at` | TIMESTAMP | 업데이트 시각 |
 
@@ -890,6 +923,8 @@ class UserResponse(BaseModel):
     spotify_id: str
     display_name: Optional[str]
     email: Optional[str]
+    profile_image: int = 1
+    status_message: str = ""
     created_at: datetime
 
 class TokenResponse(BaseModel):

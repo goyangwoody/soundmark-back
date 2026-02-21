@@ -18,6 +18,7 @@ from app.schemas.user import (
     UserPublic,
     UserDetail,
     UserWithStats,
+    UserUpdateRequest,
     FollowResponse,
     FollowersResponse,
     FollowingResponse
@@ -84,6 +85,8 @@ async def get_my_profile(
         spotify_id=current_user.spotify_id,
         display_name=current_user.display_name,
         email=current_user.email,
+        profile_image=current_user.profile_image,
+        status_message=current_user.status_message,
         created_at=current_user.created_at,
         follower_count=follower_count,
         following_count=following_count,
@@ -92,6 +95,45 @@ async def get_my_profile(
         is_followed_by=False,
         recommendations=recommendations
     )
+
+
+@router.patch("/me", response_model=UserPublic)
+async def update_my_profile(
+    request: UserUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update current user's profile
+    
+    Only provided (non-null) fields will be updated.
+    
+    Args:
+        request: Fields to update (display_name, profile_image, status_message)
+    
+    Returns:
+        Updated user profile
+    """
+    update_data = request.model_dump(exclude_unset=True)
+    
+    if not update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No fields to update"
+        )
+    
+    for field, value in update_data.items():
+        setattr(current_user, field, value)
+    
+    from datetime import datetime
+    current_user.updated_at = datetime.utcnow()
+    
+    await db.commit()
+    await db.refresh(current_user)
+    
+    logger.info(f"User {current_user.id} updated profile: {list(update_data.keys())}")
+    
+    return current_user
 
 
 @router.get("/{user_id}", response_model=UserWithStats)
@@ -188,6 +230,8 @@ async def get_user_profile(
         spotify_id=user.spotify_id,
         display_name=user.display_name,
         email=user.email,
+        profile_image=user.profile_image,
+        status_message=user.status_message,
         created_at=user.created_at,
         follower_count=follower_count,
         following_count=following_count,
