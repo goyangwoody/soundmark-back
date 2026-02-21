@@ -10,7 +10,7 @@
 - **거리 기반 접근 제어**: 200m 이내에서만 추천곡 상세 정보 확인 가능
 - **Spotify 연동**: Spotify OAuth 로그인 및 트랙 메타데이터 연동
 - **지도 API**: 가까운 핀(200m 이내)은 개별 표시, 먼 핀은 개수만 클러스터링
-- **소셜 기능**: 좋아요/언라이크 토글
+- **소셜 기능**: 좋아요/언라이크 토글, 팔로우/팔로잉
 - **업로더 정보**: 모든 추천곡에 업로더(user) 정보 포함
 
 ## 기술 스택
@@ -34,7 +34,8 @@ soundmark-back/
 │   │       ├── __init__.py           # API 라우터 통합
 │   │       ├── auth.py               # 인증 엔드포인트
 │   │       ├── recommendations.py    # 추천곡 CRUD
-│   │       └── map.py                # 지도 데이터 조회
+│   │       ├── map.py                # 지도 데이터 조회
+│   │       └── users.py              # 사용자 프로필 및 팔로우
 │   ├── core/
 │   │   ├── config.py                 # 환경 설정 (Pydantic Settings)
 │   │   ├── security.py               # JWT 인증/보안
@@ -50,7 +51,8 @@ soundmark-back/
 │   │   ├── auth.py                   # 인증 스키마
 │   │   ├── track.py                  # 트랙 스키마
 │   │   ├── recommendation.py         # 추천곡 스키마
-│   │   └── map.py                    # 지도 스키마
+│   │   ├── map.py                    # 지도 스키마
+│   │   └── user.py                   # 사용자 및 팔로우 스키마
 │   ├── services/
 │   │   ├── spotify.py                # Spotify API 통합
 │   │   ├── recommendation.py         # 추천곡 비즈니스 로직
@@ -117,7 +119,6 @@ Spotify OAuth 콜백 처리 및 JWT 토큰 발급
     "spotify_id": "spotify:user:xxxxx",
     "display_name": "홍길동",
     "email": "user@example.com",
-    "profile_image_url": "https://i.scdn.co/image/...",
     "created_at": "2026-02-20T10:00:00"
   }
   ```
@@ -171,13 +172,12 @@ JWT 토큰 갱신
       "id": 1,
       "spotify_id": "spotify:user:xxxxx",
       "display_name": "홍길동",
-      "email": "user@example.com",
-      "profile_image_url": "https://i.scdn.co/image/..."
+      "email": "user@example.com"
     },
     "message": "이 카페에서 들으면 좋아요!",
     "created_at": "2026-02-20T10:30:00",
-    "like_count": 0,
-    "liked": false
+    "reactions": {},
+    "user_reaction": null
   }
   ```
 - **로직**:
@@ -207,8 +207,12 @@ JWT 토큰 갱신
     "place_name": "스타벅스 강남점",
     "address": "서울특별시 강남구 테헤란로 123",
     "created_at": "2026-02-20T10:30:00",
-    "like_count": 5,
-    "liked": true
+    "reactions": {
+      "❤️": 3,
+      "👍": 2,
+      "😍": 1
+    },
+    "user_reaction": "❤️"
   }
   ```
 - **에러**:
@@ -224,17 +228,40 @@ JWT 토큰 갱신
     ```
   - `404`: 추천곡 없음
 
-#### `PUT /recommendations/{recommendation_id}/like`
-추천곡 좋아요/언라이크 토글
+#### `PUT /recommendations/{recommendation_id}/reactions`
+추천곡에 이모지 반응 추가/변경
 - **인증 필요**: ✅
-- **응답**: `RecommendationLikeResponse`
+- **요청 바디**: `RecommendationReactionRequest`
   ```json
   {
-    "liked": true,
-    "like_count": 6
+    "emoji": "❤️"
   }
   ```
-- **로직**: 이미 좋아요 → 취소, 안 한 경우 → 추가
+- **응답**: `RecommendationReactionResponse`
+  ```json
+  {
+    "reactions": {
+      "❤️": 4,
+      "👍": 2
+    },
+    "user_reaction": "❤️"
+  }
+  ```
+- **로직**: 한 사용자당 하나의 반응만 가능 (기존 반응 업데이트)
+
+#### `DELETE /recommendations/{recommendation_id}/reactions`
+추천곡 반응 제거
+- **인증 필요**: ✅
+- **응답**: `RecommendationReactionResponse`
+  ```json
+  {
+    "reactions": {
+      "❤️": 3,
+      "👍": 2
+    },
+    "user_reaction": null
+  }
+  ```
 
 ---
 
@@ -258,8 +285,11 @@ JWT 토큰 갱신
         "track": { /* TrackResponse */ },
         "user": { /* UserResponse */ },
         "message": "이 카페에서 들으면 좋아요!",
-        "like_count": 5,
-        "liked": true
+        "reactions": {
+          "❤️": 3,
+          "👍": 2
+        },
+        "user_reaction": "❤️"
       }
     ],
     "inactive_counts": [
@@ -278,13 +308,118 @@ JWT 토큰 갱신
 
 ---
 
+### 👥 사용자 & 팔로우 (Users & Follow) - `/api/v1/users`
+
+#### `GET /users/{user_id}`
+사용자 프로필 및 팔로우 통계 조회
+- **인증 필요**: ❌ (선택적, 인증 시 관계 정보 포함)
+- **응답**: `UserWithStats`
+  ```json
+  {
+    "id": 1,
+    "spotify_id": "spotify:user:xxxxx",
+    "display_name": "홍길동",
+    "email": "user@example.com",
+    "created_at": "2026-02-20T10:00:00",
+    "follower_count": 42,
+    "following_count": 15,
+    "is_following": false,
+    "is_followed_by": true
+  }
+  ```
+- **로직**: 인증된 경우 `is_following`, `is_followed_by` 관계 정보 포함
+
+#### `GET /users/{user_id}/stats`
+사용자 팔로우 통계만 조회
+- **인증 필요**: ❌
+- **응답**: `FollowStats`
+  ```json
+  {
+    "follower_count": 42,
+    "following_count": 15
+  }
+  ```
+
+#### `POST /users/{user_id}/follow`
+사용자 팔로우
+- **인증 필요**: ✅
+- **응답**: `FollowResponse`
+  ```json
+  {
+    "success": true,
+    "message": "Successfully followed user",
+    "follower_count": 43
+  }
+  ```
+- **에러**:
+  - `400 BAD_REQUEST`: 자기 자신 팔로우 시도
+  - `400 BAD_REQUEST`: 이미 팔로우 중
+  - `404 NOT_FOUND`: 사용자 없음
+
+#### `DELETE /users/{user_id}/follow`
+사용자 언팔로우
+- **인증 필요**: ✅
+- **응답**: `FollowResponse`
+  ```json
+  {
+    "success": true,
+    "message": "Successfully unfollowed user",
+    "follower_count": 42
+  }
+  ```
+- **에러**:
+  - `400 BAD_REQUEST`: 팔로우하지 않은 사용자
+
+#### `GET /users/{user_id}/followers`
+팔로워 목록 조회
+- **인증 필요**: ❌
+- **파라미터**:
+  - `limit` (query, 1-100, default: 50)
+  - `offset` (query, ≥0, default: 0)
+- **응답**: `FollowersResponse`
+  ```json
+  {
+    "followers": [
+      {
+        "id": 2,
+        "spotify_id": "spotify:user:yyyyy",
+        "display_name": "김철수"
+      }
+    ],
+    "total": 42
+  }
+  ```
+
+#### `GET /users/{user_id}/following`
+팔로잉 목록 조회
+- **인증 필요**: ❌
+- **파라미터**:
+  - `limit` (query, 1-100, default: 50)
+  - `offset` (query, ≥0, default: 0)
+- **응답**: `FollowingResponse`
+  ```json
+  {
+    "following": [
+      {
+        "id": 3,
+        "spotify_id": "spotify:user:zzzzz",
+        "display_name": "이영희"
+      }
+    ],
+    "total": 15
+  }
+  ```
+
+---
+
 ## 데이터베이스 모델
 
 ### 📊 ERD 개요
 ```
 users ─┬─ oauth_accounts
        ├─ recommendations ─┬─ tracks
-       └─ recommendation_likes ─┘
+       ├─ recommendation_likes ─┘
+       └─ follows (self-referencing)
                            └─ places (optional)
 ```
 
@@ -295,7 +430,6 @@ users ─┬─ oauth_accounts
 | `spotify_id` | VARCHAR(255) UNIQUE | Spotify 사용자 ID |
 | `display_name` | VARCHAR(255) | 표시 이름 |
 | `email` | VARCHAR(255) | 이메일 |
-| `profile_image_url` | VARCHAR(512) | 프로필 이미지 URL |
 | `created_at` | TIMESTAMP | 생성 시각 |
 | `updated_at` | TIMESTAMP | 업데이트 시각 |
 
@@ -303,6 +437,8 @@ users ─┬─ oauth_accounts
 - `oauth_accounts`: One-to-Many (cascade delete)
 - `recommendations`: One-to-Many (cascade delete)
 - `likes`: One-to-Many (cascade delete)
+- `following`: One-to-Many as follower (cascade delete)
+- `followers`: One-to-Many as following (cascade delete)
 
 ---
 
@@ -393,20 +529,43 @@ users ─┬─ oauth_accounts
 
 ---
 
-### `recommendation_likes` - 좋아요
+### `recommendation_likes` - 이모지 반응
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| `id` | INT PK | 좋아요 ID |
+| `id` | INT PK | 반응 ID |
 | `recommendation_id` | INT FK | Recommendation 외래키 |
 | `user_id` | INT FK | User 외래키 |
+| `emoji` | VARCHAR(50) | 이모지 반응 (유니코드 또는 이름) |
 | `created_at` | TIMESTAMP | 생성 시각 |
 
 **Constraints**:
-- `UNIQUE(recommendation_id, user_id)`: 중복 좋아요 방지
+- `UNIQUE(recommendation_id, user_id)`: 한 사용자당 하나의 반응
 
 **Relationships**:
 - `recommendation`: Many-to-One
 - `user`: Many-to-One
+
+---
+
+### `follows` - 팔로우 관계
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `id` | INT PK | 팔로우 ID |
+| `follower_id` | INT FK | 팔로워 (User 외래키) |
+| `following_id` | INT FK | 팔로잉 대상 (User 외래키) |
+| `created_at` | TIMESTAMP | 팔로우 시작 시각 |
+
+**Constraints**:
+- `UNIQUE(follower_id, following_id)`: 중복 팔로우 방지
+- `follower_id != following_id`: 자기 자신 팔로우 방지 (애플리케이션 레벨)
+
+**Relationships**:
+- `follower_user`: Many-to-One (User as follower)
+- `following_user`: Many-to-One (User as following)
+
+**인덱스**:
+- `follower_id`: 해당 사용자의 팔로잉 목록 조회
+- `following_id`: 해당 사용자의 팔로워 목록 조회
 
 ---
 
@@ -439,9 +598,10 @@ users ─┬─ oauth_accounts
 | `get_or_create_place(db, lat, lng, place_input)` | 장소 조회/생성 |
 | `create_recommendation(...)` | 추천곡 생성 (트랙+장소+지오메트리) |
 | `check_distance_access(db, rec_id, lat, lng, max_distance)` | 200m 거리 검증 |
-| `toggle_like(db, rec_id, user_id)` | 좋아요/언라이크 토글 |
-| `get_like_count(db, rec_id)` | 좋아요 수 조회 |
-| `check_user_liked(db, rec_id, user_id)` | 사용자 좋아요 여부 |
+| `add_or_update_reaction(db, rec_id, user_id, emoji)` | 이모지 반응 추가/변경 |
+| `remove_reaction(db, rec_id, user_id)` | 반응 제거 |
+| `get_reactions(db, rec_id)` | 반응 목록 조회 ({이모지: 개수}) |
+| `get_user_reaction(db, rec_id, user_id)` | 사용자의 반응 조회 |
 
 ---
 
@@ -681,7 +841,6 @@ class UserResponse(BaseModel):
     spotify_id: str
     display_name: Optional[str]
     email: Optional[str]
-    profile_image_url: Optional[str]
     created_at: datetime
 
 class TokenResponse(BaseModel):
@@ -722,8 +881,8 @@ class RecommendationResponse(BaseModel):
     user: UserResponse              # 업로더 정보
     message: Optional[str]
     created_at: datetime
-    like_count: int = 0
-    liked: bool = False
+    reactions: Dict[str, int] = {}  # 이모지 반응
+    user_reaction: Optional[str] = None  # 현재 사용자의 반응
 
 class RecommendationDetailResponse(RecommendationResponse):
     note: Optional[str]
@@ -741,8 +900,8 @@ class ActiveRecommendation(BaseModel):
     track: TrackResponse
     user: UserResponse              # 업로더 정보
     message: Optional[str]
-    like_count: int = 0
-    liked: bool = False
+    reactions: Dict[str, int] = {}  # 이모지 반응
+    user_reaction: Optional[str] = None  # 현재 사용자의 반응
 
 class InactiveCluster(BaseModel):
     lat: float                      # 클러스터 중심 위도

@@ -12,14 +12,6 @@ components:
         lat:
           title: Lat
           type: number
-        like_count:
-          default: 0
-          title: Like Count
-          type: integer
-        liked:
-          default: false
-          title: Liked
-          type: boolean
         lng:
           title: Lng
           type: number
@@ -28,15 +20,94 @@ components:
           - type: string
           - type: 'null'
           title: Message
+        reactions:
+          additionalProperties:
+            type: integer
+          description: Emoji reactions with counts
+          title: Reactions
+          type: object
         track:
           $ref: '#/components/schemas/TrackResponse'
+        user:
+          $ref: '#/components/schemas/UserResponse'
+        user_reaction:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Current user's reaction emoji
+          title: User Reaction
       required:
       - id
       - lat
       - lng
       - distance_meters
       - track
+      - user
       title: ActiveRecommendation
+      type: object
+    FollowResponse:
+      description: Response for follow/unfollow actions
+      properties:
+        follower_count:
+          title: Follower Count
+          type: integer
+        message:
+          title: Message
+          type: string
+        success:
+          title: Success
+          type: boolean
+      required:
+      - success
+      - message
+      - follower_count
+      title: FollowResponse
+      type: object
+    FollowStats:
+      description: User follow statistics
+      properties:
+        follower_count:
+          title: Follower Count
+          type: integer
+        following_count:
+          title: Following Count
+          type: integer
+      required:
+      - follower_count
+      - following_count
+      title: FollowStats
+      type: object
+    FollowersResponse:
+      description: Response for followers list
+      properties:
+        followers:
+          items:
+            $ref: '#/components/schemas/UserPublic'
+          title: Followers
+          type: array
+        total:
+          title: Total
+          type: integer
+      required:
+      - followers
+      - total
+      title: FollowersResponse
+      type: object
+    FollowingResponse:
+      description: Response for following list
+      properties:
+        following:
+          items:
+            $ref: '#/components/schemas/UserPublic'
+          title: Following
+          type: array
+        total:
+          title: Total
+          type: integer
+      required:
+      - following
+      - total
+      title: FollowingResponse
       type: object
     HTTPValidationError:
       properties:
@@ -175,14 +246,6 @@ components:
         lat:
           title: Lat
           type: number
-        like_count:
-          default: 0
-          title: Like Count
-          type: integer
-        liked:
-          default: false
-          title: Liked
-          type: boolean
         lng:
           title: Lng
           type: number
@@ -201,10 +264,22 @@ components:
           - type: string
           - type: 'null'
           title: Place Name
+        reactions:
+          additionalProperties:
+            type: integer
+          description: Emoji reactions with counts
+          title: Reactions
+          type: object
         track:
           $ref: '#/components/schemas/TrackResponse'
         user:
           $ref: '#/components/schemas/UserResponse'
+        user_reaction:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Current user's reaction emoji
+          title: User Reaction
       required:
       - id
       - lat
@@ -214,19 +289,37 @@ components:
       - created_at
       title: RecommendationDetailResponse
       type: object
-    RecommendationLikeResponse:
-      description: Response for like toggle operation
+    RecommendationReactionRequest:
+      description: Request model for adding/updating emoji reaction
       properties:
-        like_count:
-          title: Like Count
-          type: integer
-        liked:
-          title: Liked
-          type: boolean
+        emoji:
+          description: Emoji reaction (unicode or name)
+          maxLength: 50
+          minLength: 1
+          title: Emoji
+          type: string
       required:
-      - liked
-      - like_count
-      title: RecommendationLikeResponse
+      - emoji
+      title: RecommendationReactionRequest
+      type: object
+    RecommendationReactionResponse:
+      description: Response for reaction operation
+      properties:
+        reactions:
+          additionalProperties:
+            type: integer
+          description: Updated emoji reactions with counts
+          title: Reactions
+          type: object
+        user_reaction:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Current user's reaction emoji
+          title: User Reaction
+      required:
+      - reactions
+      title: RecommendationReactionResponse
       type: object
     RecommendationResponse:
       description: Basic recommendation response (used in list views)
@@ -246,14 +339,6 @@ components:
         lat:
           title: Lat
           type: number
-        like_count:
-          default: 0
-          title: Like Count
-          type: integer
-        liked:
-          default: false
-          title: Liked
-          type: boolean
         lng:
           title: Lng
           type: number
@@ -262,10 +347,22 @@ components:
           - type: string
           - type: 'null'
           title: Message
+        reactions:
+          additionalProperties:
+            type: integer
+          description: Emoji reactions with counts
+          title: Reactions
+          type: object
         track:
           $ref: '#/components/schemas/TrackResponse'
         user:
           $ref: '#/components/schemas/UserResponse'
+        user_reaction:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Current user's reaction emoji
+          title: User Reaction
       required:
       - id
       - lat
@@ -350,6 +447,25 @@ components:
       - created_at
       title: TrackResponse
       type: object
+    UserPublic:
+      description: Public user information (for followers/following lists)
+      properties:
+        display_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Display Name
+        id:
+          title: Id
+          type: integer
+        spotify_id:
+          title: Spotify Id
+          type: string
+      required:
+      - id
+      - spotify_id
+      title: UserPublic
+      type: object
     UserResponse:
       description: Response model for user information
       properties:
@@ -370,11 +486,6 @@ components:
         id:
           title: Id
           type: integer
-        profile_image_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Profile Image Url
         spotify_id:
           title: Spotify Id
           type: string
@@ -383,6 +494,51 @@ components:
       - spotify_id
       - created_at
       title: UserResponse
+      type: object
+    UserWithStats:
+      description: User with follow statistics
+      properties:
+        created_at:
+          format: date-time
+          title: Created At
+          type: string
+        display_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Display Name
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        follower_count:
+          title: Follower Count
+          type: integer
+        following_count:
+          title: Following Count
+          type: integer
+        id:
+          title: Id
+          type: integer
+        is_followed_by:
+          default: false
+          title: Is Followed By
+          type: boolean
+        is_following:
+          default: false
+          title: Is Following
+          type: boolean
+        spotify_id:
+          title: Spotify Id
+          type: string
+      required:
+      - id
+      - spotify_id
+      - created_at
+      - follower_count
+      - following_count
+      title: UserWithStats
       type: object
     ValidationError:
       properties:
@@ -647,11 +803,13 @@ paths:
       - Recommendations
   /api/v1/recommendations/{recommendation_id}/like:
     put:
-      description: "Toggle like on a recommendation\n\nIf user has already liked,\
-        \ it will unlike.\nIf user hasn't liked, it will like.\n\nRequires authentication.\n\
-        \nArgs:\n    recommendation_id: Recommendation ID\n    current_user: Authenticated\
-        \ user\n    db: Database session\n    \nReturns:\n    Current like status\
-        \ and count\n    \nRaises:\n    404: If recommendation not found"
+      deprecated: true
+      description: "Toggle like on a recommendation (deprecated - use /reactions instead)\n\
+        \nIf user has already liked, it will unlike.\nIf user hasn't liked, it will\
+        \ like.\n\nRequires authentication.\n\nArgs:\n    recommendation_id: Recommendation\
+        \ ID\n    current_user: Authenticated user\n    db: Database session\n   \
+        \ \nReturns:\n    Current like status and count\n    \nRaises:\n    404: If\
+        \ recommendation not found"
       operationId: toggle_recommendation_like_api_v1_recommendations__recommendation_id__like_put
       parameters:
       - in: path
@@ -664,8 +822,7 @@ paths:
         '200':
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/RecommendationLikeResponse'
+              schema: {}
           description: Successful Response
         '422':
           content:
@@ -678,6 +835,291 @@ paths:
       summary: Toggle Recommendation Like
       tags:
       - Recommendations
+  /api/v1/recommendations/{recommendation_id}/reactions:
+    delete:
+      description: "Remove user's reaction from a recommendation\n\nRequires authentication.\n\
+        \nArgs:\n    recommendation_id: Recommendation ID\n    current_user: Authenticated\
+        \ user\n    db: Database session\n    \nReturns:\n    Updated reactions (user_reaction\
+        \ will be None)\n    \nRaises:\n    404: If recommendation not found"
+      operationId: remove_recommendation_reaction_api_v1_recommendations__recommendation_id__reactions_delete
+      parameters:
+      - in: path
+        name: recommendation_id
+        required: true
+        schema:
+          title: Recommendation Id
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationReactionResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Remove Recommendation Reaction
+      tags:
+      - Recommendations
+    put:
+      description: "Add or update emoji reaction to a recommendation\n\nRequires authentication.\n\
+        User can have only one reaction per recommendation (will update if exists).\n\
+        \nArgs:\n    recommendation_id: Recommendation ID\n    request: Reaction data\
+        \ with emoji\n    current_user: Authenticated user\n    db: Database session\n\
+        \    \nReturns:\n    Updated reactions and user's current reaction\n    \n\
+        Raises:\n    404: If recommendation not found"
+      operationId: add_recommendation_reaction_api_v1_recommendations__recommendation_id__reactions_put
+      parameters:
+      - in: path
+        name: recommendation_id
+        required: true
+        schema:
+          title: Recommendation Id
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecommendationReactionRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationReactionResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Add Recommendation Reaction
+      tags:
+      - Recommendations
+  /api/v1/users/{user_id}:
+    get:
+      description: "Get user profile with follow statistics\n\nArgs:\n    user_id:\
+        \ ID of the user to retrieve\n    current_user: Currently authenticated user\
+        \ (optional)\n\nReturns:\n    User profile with follower/following counts\
+        \ and relationship status"
+      operationId: get_user_profile_api_v1_users__user_id__get
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          title: User Id
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWithStats'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get User Profile
+      tags:
+      - Users & Follow
+  /api/v1/users/{user_id}/follow:
+    delete:
+      description: "Unfollow a user\n\nArgs:\n    user_id: ID of the user to unfollow\n\
+        \    current_user: Currently authenticated user\n\nReturns:\n    Success status\
+        \ and updated follower count"
+      operationId: unfollow_user_api_v1_users__user_id__follow_delete
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          title: User Id
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Unfollow User
+      tags:
+      - Users & Follow
+    post:
+      description: "Follow a user\n\nArgs:\n    user_id: ID of the user to follow\n\
+        \    current_user: Currently authenticated user\n\nReturns:\n    Success status\
+        \ and updated follower count"
+      operationId: follow_user_api_v1_users__user_id__follow_post
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          title: User Id
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Follow User
+      tags:
+      - Users & Follow
+  /api/v1/users/{user_id}/followers:
+    get:
+      description: "Get list of users following this user\n\nArgs:\n    user_id: ID\
+        \ of the user\n    limit: Maximum number of results (1-100)\n    offset: Number\
+        \ of results to skip\n\nReturns:\n    List of followers and total count"
+      operationId: get_user_followers_api_v1_users__user_id__followers_get
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          title: User Id
+          type: integer
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 50
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          title: Offset
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowersResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get User Followers
+      tags:
+      - Users & Follow
+  /api/v1/users/{user_id}/following:
+    get:
+      description: "Get list of users this user is following\n\nArgs:\n    user_id:\
+        \ ID of the user\n    limit: Maximum number of results (1-100)\n    offset:\
+        \ Number of results to skip\n\nReturns:\n    List of users being followed\
+        \ and total count"
+      operationId: get_user_following_api_v1_users__user_id__following_get
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          title: User Id
+          type: integer
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 50
+          maximum: 100
+          minimum: 1
+          title: Limit
+          type: integer
+      - in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          title: Offset
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowingResponse'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get User Following
+      tags:
+      - Users & Follow
+  /api/v1/users/{user_id}/stats:
+    get:
+      description: "Get user's follow statistics\n\nArgs:\n    user_id: ID of the\
+        \ user\n\nReturns:\n    Follower and following counts"
+      operationId: get_user_follow_stats_api_v1_users__user_id__stats_get
+      parameters:
+      - in: path
+        name: user_id
+        required: true
+        schema:
+          title: User Id
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowStats'
+          description: Successful Response
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get User Follow Stats
+      tags:
+      - Users & Follow
   /health:
     get:
       description: "Health check endpoint\n\nReturns:\n    Status of the service"

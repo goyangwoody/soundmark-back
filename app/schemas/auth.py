@@ -24,7 +24,6 @@ class UserResponse(BaseModel):
     spotify_id: str
     display_name: Optional[str] = None
     email: Optional[str] = None
-    profile_image_url: Optional[str] = None
     created_at: datetime
     
     class Config:

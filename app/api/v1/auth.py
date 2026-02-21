@@ -88,7 +88,6 @@ async def spotify_callback(
         # Update existing user
         user.display_name = user_profile.get("display_name")
         user.email = user_profile.get("email")
-        user.profile_image_url = user_profile.get("profile_image_url")
         user.updated_at = datetime.utcnow()
         
         # Update OAuth tokens
@@ -120,8 +119,7 @@ async def spotify_callback(
         user = User(
             spotify_id=spotify_id,
             display_name=user_profile.get("display_name"),
-            email=user_profile.get("email"),
-            profile_image_url=user_profile.get("profile_image_url")
+            email=user_profile.get("email")
         )
         db.add(user)
         await db.flush()  # Flush to get user.id

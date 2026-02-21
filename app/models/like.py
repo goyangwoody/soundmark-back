@@ -1,8 +1,8 @@
 """
-Recommendation Like model - stores like relationships for recommendations
+Recommendation Reaction model - stores emoji reactions for recommendations
 """
 from datetime import datetime
-from sqlalchemy import DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -22,6 +22,12 @@ class RecommendationLike(Base):
         nullable=False,
         index=True
     )
+    emoji: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        default="❤️",
+        comment="Emoji reaction (name or unicode)"
+    )
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     
@@ -29,10 +35,10 @@ class RecommendationLike(Base):
     recommendation: Mapped["Recommendation"] = relationship("Recommendation", back_populates="likes")
     user: Mapped["User"] = relationship("User", back_populates="likes")
     
-    # Ensure one user can only like a recommendation once
+    # Ensure one user can only have one reaction per recommendation
     __table_args__ = (
         UniqueConstraint('recommendation_id', 'user_id', name='unique_recommendation_user_like'),
     )
     
     def __repr__(self) -> str:
-        return f"<RecommendationLike(id={self.id}, recommendation_id={self.recommendation_id}, user_id={self.user_id})>"
+        return f"<RecommendationLike(id={self.id}, recommendation_id={self.recommendation_id}, user_id={self.user_id}, emoji={self.emoji})>"

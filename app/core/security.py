@@ -120,6 +120,47 @@ async def get_current_user(
     return user
 
 
+async def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
+    db: AsyncSession = Depends(get_db)
+) -> Optional[User]:
+    """
+    Dependency to get current authenticated user from JWT token (optional)
+    Returns None if no token provided or token is invalid
+    
+    Args:
+        credentials: HTTP Authorization credentials with Bearer token (optional)
+        db: Database session
+        
+    Returns:
+        Current user object or None if not authenticated
+    """
+    if credentials is None:
+        return None
+    
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    
+    if payload is None:
+        return None
+    
+    user_id: Optional[int] = payload.get("sub")
+    if user_id is None:
+        return None
+    
+    # Convert to int if string
+    try:
+        user_id = int(user_id)
+    except (ValueError, TypeError):
+        return None
+    
+    # Get user from database
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    
+    return user
+
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verify a password against a hash

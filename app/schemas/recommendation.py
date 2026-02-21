@@ -1,7 +1,7 @@
 """
 Recommendation related Pydantic schemas
 """
-from typing import Optional
+from typing import Optional, Dict
 from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 
@@ -51,8 +51,8 @@ class RecommendationResponse(BaseModel):
     user: UserResponse
     message: Optional[str] = None
     created_at: datetime
-    like_count: int = 0
-    liked: bool = False
+    reactions: Dict[str, int] = Field(default_factory=dict, description="Emoji reactions with counts")
+    user_reaction: Optional[str] = Field(None, description="Current user's reaction emoji")
     
     class Config:
         from_attributes = True
@@ -66,7 +66,18 @@ class RecommendationDetailResponse(RecommendationResponse):
     address: Optional[str] = None
 
 
+class RecommendationReactionRequest(BaseModel):
+    """Request model for adding/updating emoji reaction"""
+    emoji: str = Field(..., min_length=1, max_length=50, description="Emoji reaction (unicode or name)")
+
+
+class RecommendationReactionResponse(BaseModel):
+    """Response for reaction operation"""
+    reactions: Dict[str, int] = Field(..., description="Updated emoji reactions with counts")
+    user_reaction: Optional[str] = Field(None, description="Current user's reaction emoji")
+
+
 class RecommendationLikeResponse(BaseModel):
-    """Response for like toggle operation"""
+    """Response for legacy like toggle operation (deprecated)"""
     liked: bool
     like_count: int

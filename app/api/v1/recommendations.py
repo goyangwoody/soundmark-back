@@ -15,6 +15,8 @@ from app.schemas.recommendation import (
     RecommendationCreateRequest,
     RecommendationResponse,
     RecommendationDetailResponse,
+    RecommendationReactionRequest,
+    RecommendationReactionResponse,
     RecommendationLikeResponse
 )
 from app.schemas.auth import UserResponse
@@ -22,6 +24,10 @@ from app.schemas.track import TrackResponse
 from app.services.recommendation import (
     create_recommendation,
     check_distance_access,
+    add_or_update_reaction,
+    remove_reaction,
+    get_reactions,
+    get_user_reaction,
     toggle_like,
     get_like_count,
     check_user_liked
@@ -72,9 +78,9 @@ async def create_recommendation_endpoint(
     # Eagerly load relationships
     await db.refresh(recommendation, ["track", "user"])
     
-    # Get like count and liked status
-    like_count = await get_like_count(db, recommendation.id)
-    liked = await check_user_liked(db, recommendation.id, current_user.id)
+    # Get reactions and user's reaction
+    reactions = await get_reactions(db, recommendation.id)
+    user_reaction = await get_user_reaction(db, recommendation.id, current_user.id)
     
     return RecommendationResponse(
         id=recommendation.id,
@@ -85,8 +91,8 @@ async def create_recommendation_endpoint(
         user=UserResponse.model_validate(recommendation.user),
         message=recommendation.message,
         created_at=recommendation.created_at,
-        like_count=like_count,
-        liked=liked
+        reactions=reactions,
+        user_reaction=user_reaction
     )
 
 
@@ -164,9 +170,9 @@ async def get_recommendation_detail(
             detail="Recommendation not found"
         )
     
-    # Get like count and liked status
-    like_count = await get_like_count(db, recommendation.id)
-    liked = await check_user_liked(db, recommendation.id, current_user.id)
+    # Get reactions and user's reaction
+    reactions = await get_reactions(db, recommendation.id)
+    user_reaction = await get_user_reaction(db, recommendation.id, current_user.id)
     
     return RecommendationDetailResponse(
         id=recommendation.id,
@@ -180,19 +186,121 @@ async def get_recommendation_detail(
         place_name=recommendation.place.place_name if recommendation.place else None,
         address=recommendation.place.address if recommendation.place else None,
         created_at=recommendation.created_at,
-        like_count=like_count,
-        liked=liked
+        reactions=reactions,
+        user_reaction=user_reaction
     )
 
 
-@router.put("/{recommendation_id}/like", response_model=RecommendationLikeResponse)
+@router.put("/{recommendation_id}/reactions", response_model=RecommendationReactionResponse)
+async def add_recommendation_reaction(
+    recommendation_id: int,
+    request: RecommendationReactionRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Add or update emoji reaction to a recommendation
+    
+    Requires authentication.
+    User can have only one reaction per recommendation (will update if exists).
+    
+    Args:
+        recommendation_id: Recommendation ID
+        request: Reaction data with emoji
+        current_user: Authenticated user
+        db: Database session
+        
+    Returns:
+        Updated reactions and user's current reaction
+        
+    Raises:
+        404: If recommendation not found
+    """
+    # Check if recommendation exists
+    result = await db.execute(
+        select(Recommendation).where(
+            and_(
+                Recommendation.id == recommendation_id,
+                Recommendation.deleted_at.is_(None)
+            )
+        )
+    )
+    recommendation = result.scalar_one_or_none()
+    
+    if not recommendation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recommendation not found"
+        )
+    
+    # Add or update reaction
+    reactions, user_reaction = await add_or_update_reaction(
+        db, recommendation_id, current_user.id, request.emoji
+    )
+    
+    return RecommendationReactionResponse(
+        reactions=reactions,
+        user_reaction=user_reaction
+    )
+
+
+@router.delete("/{recommendation_id}/reactions", response_model=RecommendationReactionResponse)
+async def remove_recommendation_reaction(
+    recommendation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Remove user's reaction from a recommendation
+    
+    Requires authentication.
+    
+    Args:
+        recommendation_id: Recommendation ID
+        current_user: Authenticated user
+        db: Database session
+        
+    Returns:
+        Updated reactions (user_reaction will be None)
+        
+    Raises:
+        404: If recommendation not found
+    """
+    # Check if recommendation exists
+    result = await db.execute(
+        select(Recommendation).where(
+            and_(
+                Recommendation.id == recommendation_id,
+                Recommendation.deleted_at.is_(None)
+            )
+        )
+    )
+    recommendation = result.scalar_one_or_none()
+    
+    if not recommendation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recommendation not found"
+        )
+    
+    # Remove reaction
+    reactions = await remove_reaction(db, recommendation_id, current_user.id)
+    
+    return RecommendationReactionResponse(
+        reactions=reactions,
+        user_reaction=None
+    )
+
+
+# Legacy endpoint for backward compatibility (deprecated)
+@router.put("/{recommendation_id}/like", deprecated=True)
 async def toggle_recommendation_like(
     recommendation_id: int,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Toggle like on a recommendation
+    Toggle like on a recommendation (deprecated - use /reactions instead)
     
     If user has already liked, it will unlike.
     If user hasn't liked, it will like.

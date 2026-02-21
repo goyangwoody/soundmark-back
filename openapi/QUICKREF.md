@@ -22,10 +22,19 @@ python generate_openapi.py
 ### Recommendations (`/api/v1/recommendations`)
 - `POST /` - 새 추천 생성 🔒
 - `GET  /{recommendation_id}` - 추천 상세 조회 🔒
-- `PUT  /{recommendation_id}/like` - 좋아요 토글 🔒
+- `PUT  /{recommendation_id}/reactions` - 이모지 반응 추가/변경 🔒
+- `DELETE /{recommendation_id}/reactions` - 이모지 반응 제거 🔒
 
 ### Map (`/api/v1/map`)
 - `GET  /nearby` - 주변 추천 조회 (위도/경도 기반) 🔒
+
+### Users & Follow (`/api/v1/users`)
+- `GET  /{user_id}` - 사용자 프로필 및 팔로우 통계 조회
+- `GET  /{user_id}/stats` - 팔로우 통계만 조회
+- `POST /{user_id}/follow` - 사용자 팔로우 🔒
+- `DELETE /{user_id}/follow` - 사용자 언팔로우 🔒
+- `GET  /{user_id}/followers` - 팔로워 목록 조회
+- `GET  /{user_id}/following` - 팔로잉 목록 조회
 
 ### Health
 - `GET  /health` - 서버 상태 확인

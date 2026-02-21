@@ -99,8 +99,7 @@ class SpotifyService:
             return {
                 "spotify_id": user_profile.get("id"),
                 "display_name": user_profile.get("display_name"),
-                "email": user_profile.get("email"),
-                "profile_image_url": user_profile.get("images", [{}])[0].get("url") if user_profile.get("images") else None,
+                "email": user_profile.get("email")
             }
         except Exception as e:
             logger.error(f"Failed to get user profile: {str(e)}")

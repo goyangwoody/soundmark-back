@@ -2,7 +2,7 @@
 Recommendation business logic service
 """
 import logging
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
@@ -265,13 +265,155 @@ async def check_distance_access(
     return (is_within_range, distance)
 
 
+async def add_or_update_reaction(
+    db: AsyncSession,
+    recommendation_id: int,
+    user_id: int,
+    emoji: str
+) -> Tuple[Dict[str, int], Optional[str]]:
+    """
+    Add or update user's emoji reaction to a recommendation
+    
+    Args:
+        db: Database session
+        recommendation_id: Recommendation ID
+        user_id: User ID
+        emoji: Emoji reaction (unicode or name)
+        
+    Returns:
+        Tuple of (reactions: Dict[str, int], user_reaction: Optional[str])
+    """
+    # Check if reaction already exists
+    result = await db.execute(
+        select(RecommendationLike).where(
+            and_(
+                RecommendationLike.recommendation_id == recommendation_id,
+                RecommendationLike.user_id == user_id
+            )
+        )
+    )
+    existing_reaction = result.scalar_one_or_none()
+    
+    if existing_reaction:
+        # Update existing reaction
+        existing_reaction.emoji = emoji
+    else:
+        # Add new reaction
+        new_reaction = RecommendationLike(
+            recommendation_id=recommendation_id,
+            user_id=user_id,
+            emoji=emoji
+        )
+        db.add(new_reaction)
+    
+    await db.commit()
+    
+    # Get updated reactions
+    reactions = await get_reactions(db, recommendation_id)
+    
+    return (reactions, emoji)
+
+
+async def remove_reaction(
+    db: AsyncSession,
+    recommendation_id: int,
+    user_id: int
+) -> Dict[str, int]:
+    """
+    Remove user's reaction from a recommendation
+    
+    Args:
+        db: Database session
+        recommendation_id: Recommendation ID
+        user_id: User ID
+        
+    Returns:
+        Updated reactions dict
+    """
+    # Find and delete reaction
+    result = await db.execute(
+        select(RecommendationLike).where(
+            and_(
+                RecommendationLike.recommendation_id == recommendation_id,
+                RecommendationLike.user_id == user_id
+            )
+        )
+    )
+    reaction = result.scalar_one_or_none()
+    
+    if reaction:
+        await db.delete(reaction)
+        await db.commit()
+    
+    # Get updated reactions
+    reactions = await get_reactions(db, recommendation_id)
+    
+    return reactions
+
+
+async def get_reactions(
+    db: AsyncSession,
+    recommendation_id: int
+) -> Dict[str, int]:
+    """
+    Get emoji reactions with counts for a recommendation
+    
+    Args:
+        db: Database session
+        recommendation_id: Recommendation ID
+        
+    Returns:
+        Dict mapping emoji to count, e.g. {"❤️": 5, "👍": 3}
+    """
+    result = await db.execute(
+        select(
+            RecommendationLike.emoji,
+            func.count(RecommendationLike.id).label('count')
+        )
+        .where(RecommendationLike.recommendation_id == recommendation_id)
+        .group_by(RecommendationLike.emoji)
+    )
+    
+    reactions = {row.emoji: row.count for row in result}
+    return reactions
+
+
+async def get_user_reaction(
+    db: AsyncSession,
+    recommendation_id: int,
+    user_id: int
+) -> Optional[str]:
+    """
+    Get user's current reaction emoji for a recommendation
+    
+    Args:
+        db: Database session
+        recommendation_id: Recommendation ID
+        user_id: User ID
+        
+    Returns:
+        Emoji string or None if no reaction
+    """
+    result = await db.execute(
+        select(RecommendationLike.emoji).where(
+            and_(
+                RecommendationLike.recommendation_id == recommendation_id,
+                RecommendationLike.user_id == user_id
+            )
+        )
+    )
+    emoji = result.scalar_one_or_none()
+    return emoji
+
+
+# Legacy function for backward compatibility (deprecated)
 async def toggle_like(
     db: AsyncSession,
     recommendation_id: int,
     user_id: int
 ) -> Tuple[bool, int]:
     """
-    Toggle like on a recommendation
+    Toggle like on a recommendation (deprecated - use add_or_update_reaction)
     
     Args:
         db: Database session
@@ -281,7 +423,7 @@ async def toggle_like(
     Returns:
         Tuple of (liked: bool, like_count: int)
     """
-    # Check if like already exists
+    # Check if reaction already exists
     result = await db.execute(
         select(RecommendationLike).where(
             and_(
@@ -290,24 +432,25 @@ async def toggle_like(
             )
         )
     )
-    existing_like = result.scalar_one_or_none()
+    existing_reaction = result.scalar_one_or_none()
     
-    if existing_like:
-        # Unlike - remove the like
-        await db.delete(existing_like)
+    if existing_reaction:
+        # Unlike - remove the reaction
+        await db.delete(existing_reaction)
         liked = False
     else:
-        # Like - add new like
-        new_like = RecommendationLike(
+        # Like - add default heart reaction
+        new_reaction = RecommendationLike(
             recommendation_id=recommendation_id,
-            user_id=user_id
+            user_id=user_id,
+            emoji="❤️"
         )
-        db.add(new_like)
+        db.add(new_reaction)
         liked = True
     
     await db.commit()
     
-    # Get updated like count
+    # Get updated like count (total reactions)
     count_result = await db.execute(
         select(func.count(RecommendationLike.id)).where(
             RecommendationLike.recommendation_id == recommendation_id
@@ -319,7 +462,7 @@ async def toggle_like(
 
 
 async def get_like_count(db: AsyncSession, recommendation_id: int) -> int:
-    """Get like count for a recommendation"""
+    """Get like count for a recommendation (deprecated - use get_reactions)"""
     result = await db.execute(
         select(func.count(RecommendationLike.id)).where(
             RecommendationLike.recommendation_id == recommendation_id

@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS users (
     spotify_id VARCHAR(255) NOT NULL UNIQUE,
     display_name VARCHAR(255),
     email VARCHAR(255),
-    profile_image_url VARCHAR(512),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -103,6 +102,7 @@ CREATE TABLE IF NOT EXISTS recommendation_likes (
     id SERIAL PRIMARY KEY,
     recommendation_id INTEGER NOT NULL REFERENCES recommendations(id) ON DELETE CASCADE,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    emoji VARCHAR(50) NOT NULL DEFAULT '❤️',
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE(recommendation_id, user_id)
 );

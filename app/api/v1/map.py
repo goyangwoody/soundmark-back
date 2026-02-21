@@ -11,7 +11,7 @@ from app.schemas.map import MapResponse, ActiveRecommendation, InactiveCluster
 from app.schemas.track import TrackResponse
 from app.schemas.auth import UserResponse
 from app.services.location import get_map_data
-from app.services.recommendation import get_like_count, check_user_liked
+from app.services.recommendation import get_reactions, get_user_reaction
 from app.core.security import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -51,9 +51,9 @@ async def get_nearby_map_data(
     # Build response for active recommendations
     active_response = []
     for recommendation, distance in active_recommendations:
-        # Get like count and liked status
-        like_count = await get_like_count(db, recommendation.id)
-        liked = await check_user_liked(db, recommendation.id, current_user.id)
+        # Get reactions and user's reaction
+        reactions = await get_reactions(db, recommendation.id)
+        user_reaction = await get_user_reaction(db, recommendation.id, current_user.id)
         
         active_response.append(
             ActiveRecommendation(
@@ -64,8 +64,8 @@ async def get_nearby_map_data(
                 track=TrackResponse.model_validate(recommendation.track),
                 user=UserResponse.model_validate(recommendation.user),
                 message=recommendation.message,
-                like_count=like_count,
-                liked=liked
+                reactions=reactions,
+                user_reaction=user_reaction
             )
         )
     

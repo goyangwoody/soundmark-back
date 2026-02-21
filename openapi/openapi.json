@@ -248,14 +248,70 @@
         }
       }
     },
-    "/api/v1/recommendations/{recommendation_id}/like": {
+    "/api/v1/recommendations/{recommendation_id}/reactions": {
       "put": {
         "tags": [
           "Recommendations"
         ],
-        "summary": "Toggle Recommendation Like",
-        "description": "Toggle like on a recommendation\n\nIf user has already liked, it will unlike.\nIf user hasn't liked, it will like.\n\nRequires authentication.\n\nArgs:\n    recommendation_id: Recommendation ID\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    Current like status and count\n    \nRaises:\n    404: If recommendation not found",
-        "operationId": "toggle_recommendation_like_api_v1_recommendations__recommendation_id__like_put",
+        "summary": "Add Recommendation Reaction",
+        "description": "Add or update emoji reaction to a recommendation\n\nRequires authentication.\nUser can have only one reaction per recommendation (will update if exists).\n\nArgs:\n    recommendation_id: Recommendation ID\n    request: Reaction data with emoji\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    Updated reactions and user's current reaction\n    \nRaises:\n    404: If recommendation not found",
+        "operationId": "add_recommendation_reaction_api_v1_recommendations__recommendation_id__reactions_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recommendation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecommendationReactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationReactionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Recommendations"
+        ],
+        "summary": "Remove Recommendation Reaction",
+        "description": "Remove user's reaction from a recommendation\n\nRequires authentication.\n\nArgs:\n    recommendation_id: Recommendation ID\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    Updated reactions (user_reaction will be None)\n    \nRaises:\n    404: If recommendation not found",
+        "operationId": "remove_recommendation_reaction_api_v1_recommendations__recommendation_id__reactions_delete",
         "security": [
           {
             "HTTPBearer": []
@@ -278,8 +334,55 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RecommendationLikeResponse"
+                  "$ref": "#/components/schemas/RecommendationReactionResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/{recommendation_id}/like": {
+      "put": {
+        "tags": [
+          "Recommendations"
+        ],
+        "summary": "Toggle Recommendation Like",
+        "description": "Toggle like on a recommendation (deprecated - use /reactions instead)\n\nIf user has already liked, it will unlike.\nIf user hasn't liked, it will like.\n\nRequires authentication.\n\nArgs:\n    recommendation_id: Recommendation ID\n    current_user: Authenticated user\n    db: Database session\n    \nReturns:\n    Current like status and count\n    \nRaises:\n    404: If recommendation not found",
+        "operationId": "toggle_recommendation_like_api_v1_recommendations__recommendation_id__like_put",
+        "deprecated": true,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Recommendation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -361,6 +464,323 @@
         }
       }
     },
+    "/api/v1/users/{user_id}": {
+      "get": {
+        "tags": [
+          "Users & Follow"
+        ],
+        "summary": "Get User Profile",
+        "description": "Get user profile with follow statistics\n\nArgs:\n    user_id: ID of the user to retrieve\n    current_user: Currently authenticated user (optional)\n\nReturns:\n    User profile with follower/following counts and relationship status",
+        "operationId": "get_user_profile_api_v1_users__user_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserWithStats"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/stats": {
+      "get": {
+        "tags": [
+          "Users & Follow"
+        ],
+        "summary": "Get User Follow Stats",
+        "description": "Get user's follow statistics\n\nArgs:\n    user_id: ID of the user\n\nReturns:\n    Follower and following counts",
+        "operationId": "get_user_follow_stats_api_v1_users__user_id__stats_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowStats"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/follow": {
+      "post": {
+        "tags": [
+          "Users & Follow"
+        ],
+        "summary": "Follow User",
+        "description": "Follow a user\n\nArgs:\n    user_id: ID of the user to follow\n    current_user: Currently authenticated user\n\nReturns:\n    Success status and updated follower count",
+        "operationId": "follow_user_api_v1_users__user_id__follow_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users & Follow"
+        ],
+        "summary": "Unfollow User",
+        "description": "Unfollow a user\n\nArgs:\n    user_id: ID of the user to unfollow\n    current_user: Currently authenticated user\n\nReturns:\n    Success status and updated follower count",
+        "operationId": "unfollow_user_api_v1_users__user_id__follow_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/followers": {
+      "get": {
+        "tags": [
+          "Users & Follow"
+        ],
+        "summary": "Get User Followers",
+        "description": "Get list of users following this user\n\nArgs:\n    user_id: ID of the user\n    limit: Maximum number of results (1-100)\n    offset: Number of results to skip\n\nReturns:\n    List of followers and total count",
+        "operationId": "get_user_followers_api_v1_users__user_id__followers_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/following": {
+      "get": {
+        "tags": [
+          "Users & Follow"
+        ],
+        "summary": "Get User Following",
+        "description": "Get list of users this user is following\n\nArgs:\n    user_id: ID of the user\n    limit: Maximum number of results (1-100)\n    offset: Number of results to skip\n\nReturns:\n    List of users being followed and total count",
+        "operationId": "get_user_following_api_v1_users__user_id__following_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -425,6 +845,9 @@
           "track": {
             "$ref": "#/components/schemas/TrackResponse"
           },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          },
           "message": {
             "anyOf": [
               {
@@ -436,15 +859,25 @@
             ],
             "title": "Message"
           },
-          "like_count": {
-            "type": "integer",
-            "title": "Like Count",
-            "default": 0
+          "reactions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Reactions",
+            "description": "Emoji reactions with counts"
           },
-          "liked": {
-            "type": "boolean",
-            "title": "Liked",
-            "default": false
+          "user_reaction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Reaction",
+            "description": "Current user's reaction emoji"
           }
         },
         "type": "object",
@@ -453,10 +886,98 @@
           "lat",
           "lng",
           "distance_meters",
-          "track"
+          "track",
+          "user"
         ],
         "title": "ActiveRecommendation",
         "description": "Individual active recommendation (within 200m)"
+      },
+      "FollowResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "follower_count": {
+            "type": "integer",
+            "title": "Follower Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "follower_count"
+        ],
+        "title": "FollowResponse",
+        "description": "Response for follow/unfollow actions"
+      },
+      "FollowStats": {
+        "properties": {
+          "follower_count": {
+            "type": "integer",
+            "title": "Follower Count"
+          },
+          "following_count": {
+            "type": "integer",
+            "title": "Following Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "follower_count",
+          "following_count"
+        ],
+        "title": "FollowStats",
+        "description": "User follow statistics"
+      },
+      "FollowersResponse": {
+        "properties": {
+          "followers": {
+            "items": {
+              "$ref": "#/components/schemas/UserPublic"
+            },
+            "type": "array",
+            "title": "Followers"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "followers",
+          "total"
+        ],
+        "title": "FollowersResponse",
+        "description": "Response for followers list"
+      },
+      "FollowingResponse": {
+        "properties": {
+          "following": {
+            "items": {
+              "$ref": "#/components/schemas/UserPublic"
+            },
+            "type": "array",
+            "title": "Following"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "following",
+          "total"
+        ],
+        "title": "FollowingResponse",
+        "description": "Response for following list"
       },
       "HTTPValidationError": {
         "properties": {
@@ -676,15 +1197,25 @@
             "format": "date-time",
             "title": "Created At"
           },
-          "like_count": {
-            "type": "integer",
-            "title": "Like Count",
-            "default": 0
+          "reactions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Reactions",
+            "description": "Emoji reactions with counts"
           },
-          "liked": {
-            "type": "boolean",
-            "title": "Liked",
-            "default": false
+          "user_reaction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Reaction",
+            "description": "Current user's reaction emoji"
           },
           "note": {
             "anyOf": [
@@ -732,24 +1263,52 @@
         "title": "RecommendationDetailResponse",
         "description": "Detailed recommendation response (used in detail view)"
       },
-      "RecommendationLikeResponse": {
+      "RecommendationReactionRequest": {
         "properties": {
-          "liked": {
-            "type": "boolean",
-            "title": "Liked"
-          },
-          "like_count": {
-            "type": "integer",
-            "title": "Like Count"
+          "emoji": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Emoji",
+            "description": "Emoji reaction (unicode or name)"
           }
         },
         "type": "object",
         "required": [
-          "liked",
-          "like_count"
+          "emoji"
         ],
-        "title": "RecommendationLikeResponse",
-        "description": "Response for like toggle operation"
+        "title": "RecommendationReactionRequest",
+        "description": "Request model for adding/updating emoji reaction"
+      },
+      "RecommendationReactionResponse": {
+        "properties": {
+          "reactions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Reactions",
+            "description": "Updated emoji reactions with counts"
+          },
+          "user_reaction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Reaction",
+            "description": "Current user's reaction emoji"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reactions"
+        ],
+        "title": "RecommendationReactionResponse",
+        "description": "Response for reaction operation"
       },
       "RecommendationResponse": {
         "properties": {
@@ -798,15 +1357,25 @@
             "format": "date-time",
             "title": "Created At"
           },
-          "like_count": {
-            "type": "integer",
-            "title": "Like Count",
-            "default": 0
+          "reactions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Reactions",
+            "description": "Emoji reactions with counts"
           },
-          "liked": {
-            "type": "boolean",
-            "title": "Liked",
-            "default": false
+          "user_reaction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Reaction",
+            "description": "Current user's reaction emoji"
           }
         },
         "type": "object",
@@ -938,6 +1507,36 @@
         "title": "TrackResponse",
         "description": "Track response model"
       },
+      "UserPublic": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "spotify_id": {
+            "type": "string",
+            "title": "Spotify Id"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "spotify_id"
+        ],
+        "title": "UserPublic",
+        "description": "Public user information (for followers/following lists)"
+      },
       "UserResponse": {
         "properties": {
           "id": {
@@ -970,17 +1569,6 @@
             ],
             "title": "Email"
           },
-          "profile_image_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Profile Image Url"
-          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -995,6 +1583,73 @@
         ],
         "title": "UserResponse",
         "description": "Response model for user information"
+      },
+      "UserWithStats": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "spotify_id": {
+            "type": "string",
+            "title": "Spotify Id"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "follower_count": {
+            "type": "integer",
+            "title": "Follower Count"
+          },
+          "following_count": {
+            "type": "integer",
+            "title": "Following Count"
+          },
+          "is_following": {
+            "type": "boolean",
+            "title": "Is Following",
+            "default": false
+          },
+          "is_followed_by": {
+            "type": "boolean",
+            "title": "Is Followed By",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "spotify_id",
+          "created_at",
+          "follower_count",
+          "following_count"
+        ],
+        "title": "UserWithStats",
+        "description": "User with follow statistics"
       },
       "ValidationError": {
         "properties": {

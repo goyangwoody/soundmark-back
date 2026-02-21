@@ -16,7 +16,6 @@ class User(Base):
     spotify_id: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     display_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    profile_image_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -40,6 +39,23 @@ class User(Base):
     likes: Mapped[list["RecommendationLike"]] = relationship(
         "RecommendationLike",
         back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    
+    # Follow relationships
+    # Users who follow this user (followers)
+    followers: Mapped[list["Follow"]] = relationship(
+        "Follow",
+        foreign_keys="Follow.following_id",
+        back_populates="following_user",
+        cascade="all, delete-orphan"
+    )
+    
+    # Users this user is following
+    following: Mapped[list["Follow"]] = relationship(
+        "Follow",
+        foreign_keys="Follow.follower_id",
+        back_populates="follower_user",
         cascade="all, delete-orphan"
     )
     

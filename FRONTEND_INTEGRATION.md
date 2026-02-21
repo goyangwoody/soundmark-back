@@ -196,6 +196,46 @@ interface MapService {
         @Header("Authorization") token: String
     ): NearbyResponse
 }
+
+// UserService.kt
+interface UserService {
+    @GET("/api/v1/users/{user_id}")
+    suspend fun getUserProfile(
+        @Path("user_id") userId: Int,
+        @Header("Authorization") token: String? = null
+    ): UserWithStatsResponse
+    
+    @GET("/api/v1/users/{user_id}/stats")
+    suspend fun getUserStats(
+        @Path("user_id") userId: Int
+    ): FollowStatsResponse
+    
+    @POST("/api/v1/users/{user_id}/follow")
+    suspend fun followUser(
+        @Path("user_id") userId: Int,
+        @Header("Authorization") token: String
+    ): FollowResponse
+    
+    @DELETE("/api/v1/users/{user_id}/follow")
+    suspend fun unfollowUser(
+        @Path("user_id") userId: Int,
+        @Header("Authorization") token: String
+    ): FollowResponse
+    
+    @GET("/api/v1/users/{user_id}/followers")
+    suspend fun getFollowers(
+        @Path("user_id") userId: Int,
+        @Query("limit") limit: Int = 50,
+        @Query("offset") offset: Int = 0
+    ): FollowersResponse
+    
+    @GET("/api/v1/users/{user_id}/following")
+    suspend fun getFollowing(
+        @Path("user_id") userId: Int,
+        @Query("limit") limit: Int = 50,
+        @Query("offset") offset: Int = 0
+    ): FollowingResponse
+}
 ```
 
 #### Data Models
@@ -215,7 +255,6 @@ data class UserResponse(
     val spotifyId: String,
     val displayName: String?,
     val email: String?,
-    val profileImageUrl: String?,
     val createdAt: String
 )
 
@@ -272,6 +311,45 @@ data class NearbyResponse(
     val recommendations: List<RecommendationResponse>,
     val total: Int
 )
+
+data class UserWithStatsResponse(
+    val id: Int,
+    val spotifyId: String,
+    val displayName: String?,
+    val email: String?,
+    val createdAt: String,
+    val followerCount: Int,
+    val followingCount: Int,
+    val isFollowing: Boolean,
+    val isFollowedBy: Boolean
+)
+
+data class FollowStatsResponse(
+    val followerCount: Int,
+    val followingCount: Int
+)
+
+data class FollowResponse(
+    val success: Boolean,
+    val message: String,
+    val followerCount: Int
+)
+
+data class UserPublic(
+    val id: Int,
+    val spotifyId: String,
+    val displayName: String?
+)
+
+data class FollowersResponse(
+    val followers: List<UserPublic>,
+    val total: Int
+)
+
+data class FollowingResponse(
+    val following: List<UserPublic>,
+    val total: Int
+)
 ```
 
 #### 사용 예시
@@ -310,6 +388,64 @@ class MainActivity : AppCompatActivity() {
         
         // 현재 위치에서 주변 추천 로드
         viewModel.loadNearbyRecommendations(37.5665, 126.9780)
+    }
+}
+
+// UserViewModel 예시
+class UserViewModel : ViewModel() {
+    private val authToken = "Bearer YOUR_JWT_TOKEN"
+    
+    fun loadUserProfile(userId: Int) {
+        viewModelScope.launch {
+            try {
+                val profile = ApiClient.userService.getUserProfile(
+                    userId = userId,
+                    token = authToken
+                )
+                
+                // UI 업데이트
+                _userProfile.value = profile
+                
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Error loading profile", e)
+            }
+        }
+    }
+    
+    fun followUser(userId: Int) {
+        viewModelScope.launch {
+            try {
+                val response = ApiClient.userService.followUser(
+                    userId = userId,
+                    token = authToken
+                )
+                
+                if (response.success) {
+                    _followStatus.value = true
+                    _followerCount.value = response.followerCount
+                }
+                
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Error following user", e)
+            }
+        }
+    }
+    
+    fun loadFollowers(userId: Int) {
+        viewModelScope.launch {
+            try {
+                val response = ApiClient.userService.getFollowers(
+                    userId = userId,
+                    limit = 50,
+                    offset = 0
+                )
+                
+                _followers.value = response.followers
+                
+            } catch (e: Exception) {
+                Log.e("UserViewModel", "Error loading followers", e)
+            }
+        }
     }
 }
 ```

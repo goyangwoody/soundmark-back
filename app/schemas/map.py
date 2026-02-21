@@ -1,10 +1,11 @@
 """
 Map related Pydantic schemas
 """
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pydantic import BaseModel, Field
 
 from app.schemas.track import TrackResponse
+from app.schemas.auth import UserResponse
 
 
 class ActiveRecommendation(BaseModel):
@@ -14,9 +15,10 @@ class ActiveRecommendation(BaseModel):
     lng: float
     distance_meters: float
     track: TrackResponse
+    user: UserResponse
     message: Optional[str] = None
-    like_count: int = 0
-    liked: bool = False
+    reactions: Dict[str, int] = Field(default_factory=dict, description="Emoji reactions with counts")
+    user_reaction: Optional[str] = Field(None, description="Current user's reaction emoji")
 
 
 class InactiveCluster(BaseModel):
